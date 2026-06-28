@@ -1,0 +1,541 @@
+/* ==========================================
+   ANIMATIONS.CSS - Animations & Transitions
+   Duolingo-esque Smooth Effects
+   ========================================== */
+
+/* ========== FADE ANIMATIONS ========== */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.fade-out {
+    animation: fadeOut 0.3s ease-in-out;
+}
+
+/* ========== SLIDE ANIMATIONS ========== */
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideOutLeft {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+}
+
+.slide-in-left {
+    animation: slideInLeft 0.4s ease-out;
+}
+
+.slide-in-right {
+    animation: slideInRight 0.4s ease-out;
+}
+
+.slide-in-up {
+    animation: slideInUp 0.4s ease-out;
+}
+
+.slide-in-down {
+    animation: slideInDown 0.4s ease-out;
+}
+
+/* ========== SCALE ANIMATIONS ========== */
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes scaleOut {
+    from {
+        opacity: 1;
+        transform: scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+}
+
+@keyframes bounce {
+    0% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+    100% {
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+.scale-in {
+    animation: scaleIn 0.3s ease-out;
+}
+
+.scale-out {
+    animation: scaleOut 0.3s ease-out;
+}
+
+.bounce {
+    animation: bounce 0.6s ease-in-out;
+}
+
+.pulse {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* ========== GLOW/SHINE EFFECTS ========== */
+@keyframes glow {
+    0% {
+        box-shadow: 0 0 5px rgba(0, 212, 255, 0.5);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(0, 212, 255, 0.8);
+    }
+    100% {
+        box-shadow: 0 0 5px rgba(0, 212, 255, 0.5);
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
+.glow {
+    animation: glow 2s ease-in-out infinite;
+}
+
+.shimmer {
+    background: linear-gradient(
+        90deg,
+        var(--card-bg) 0%,
+        rgba(0, 212, 255, 0.2) 50%,
+        var(--card-bg) 100%
+    );
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite;
+}
+
+/* ========== FLIP ANIMATIONS ========== */
+@keyframes flipIn {
+    from {
+        opacity: 0;
+        transform: perspective(400px) rotateY(90deg);
+    }
+    to {
+        opacity: 1;
+        transform: perspective(400px) rotateY(0);
+    }
+}
+
+@keyframes flipOut {
+    from {
+        opacity: 1;
+        transform: perspective(400px) rotateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: perspective(400px) rotateY(90deg);
+    }
+}
+
+.flip-in {
+    animation: flipIn 0.6s ease-out;
+}
+
+.flip-out {
+    animation: flipOut 0.6s ease-out;
+}
+
+/* ========== ROTATION ANIMATIONS ========== */
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes rotateReverse {
+    from {
+        transform: rotate(360deg);
+    }
+    to {
+        transform: rotate(0deg);
+    }
+}
+
+.rotate {
+    animation: rotate 1s linear infinite;
+}
+
+.rotate-reverse {
+    animation: rotateReverse 1s linear infinite;
+}
+
+/* ========== HEARTBEAT ========== */
+@keyframes heartbeat {
+    0%, 100% {
+        transform: scale(1);
+    }
+    14% {
+        transform: scale(1.1);
+    }
+    28% {
+        transform: scale(1);
+    }
+}
+
+.heartbeat {
+    animation: heartbeat 1.3s ease-in-out infinite;
+}
+
+/* ========== WIGGLE ========== */
+@keyframes wiggle {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-5px) rotate(-2deg);
+    }
+    75% {
+        transform: translateX(5px) rotate(2deg);
+    }
+}
+
+.wiggle {
+    animation: wiggle 0.5s ease-in-out infinite;
+}
+
+/* ========== CHECKMARK ANIMATION ========== */
+@keyframes checkmark {
+    0% {
+        stroke-dashoffset: 50;
+        opacity: 0;
+    }
+    100% {
+        stroke-dashoffset: 0;
+        opacity: 1;
+    }
+}
+
+.checkmark {
+    animation: checkmark 0.6s ease-out forwards;
+    stroke-dasharray: 50;
+}
+
+/* ========== SUCCESS BURST ========== */
+@keyframes burst {
+    0% {
+        transform: scale(0);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 0;
+    }
+}
+
+@keyframes burstParticle {
+    0% {
+        opacity: 1;
+        transform: translate(0, 0);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(var(--tx), var(--ty));
+    }
+}
+
+.burst {
+    animation: burst 0.6s ease-out;
+}
+
+.burst-particle {
+    position: absolute;
+    animation: burstParticle 0.8s ease-out forwards;
+}
+
+/* ========== TYPING ANIMATION ========== */
+@keyframes typing {
+    from {
+        width: 0;
+    }
+    to {
+        width: 100%;
+    }
+}
+
+@keyframes blink {
+    0%, 49%, 100% {
+        border-right-color: var(--accent);
+    }
+    50% {
+        border-right-color: transparent;
+    }
+}
+
+.typing {
+    overflow: hidden;
+    border-right: 2px solid var(--accent);
+    white-space: nowrap;
+    animation: typing 3s steps(40, end), blink 0.75s step-end infinite;
+}
+
+/* ========== FLOATING/DRIFT ========== */
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-20px);
+    }
+}
+
+@keyframes drift {
+    0%, 100% {
+        transform: translateX(0px);
+    }
+    50% {
+        transform: translateX(10px);
+    }
+}
+
+.float {
+    animation: float 3s ease-in-out infinite;
+}
+
+.drift {
+    animation: drift 4s ease-in-out infinite;
+}
+
+/* ========== PROGRESS BAR FILL ========== */
+@keyframes progressFill {
+    from {
+        width: 0%;
+    }
+    to {
+        width: var(--progress);
+    }
+}
+
+.progress-bar {
+    animation: progressFill 1s ease-out forwards;
+}
+
+/* ========== TOAST/NOTIFICATION ANIMATION ========== */
+@keyframes toastIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes toastOut {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+}
+
+.toast {
+    animation: toastIn 0.4s ease-out, toastOut 0.4s ease-out 3s forwards;
+}
+
+/* ========== BADGE UNLOCK ANIMATION ========== */
+@keyframes badgeUnlock {
+    0% {
+        transform: scale(0) rotate(-180deg);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2) rotate(10deg);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1) rotate(0);
+        opacity: 1;
+    }
+}
+
+.badge-unlock {
+    animation: badgeUnlock 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* ========== CONFETTI ANIMATION ========== */
+@keyframes confetti-fall {
+    to {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+.confetti {
+    animation: confetti-fall 3s ease-in forwards;
+}
+
+/* ========== TRANSITION UTILITIES ========== */
+.transition-all {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-fast {
+    transition: all 0.15s ease-in-out;
+}
+
+.transition-slow {
+    transition: all 0.5s ease-in-out;
+}
+
+.transition-colors {
+    transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+}
+
+.transition-transform {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ========== DELAY UTILITIES ========== */
+.delay-1 { animation-delay: 0.1s; }
+.delay-2 { animation-delay: 0.2s; }
+.delay-3 { animation-delay: 0.3s; }
+.delay-4 { animation-delay: 0.4s; }
+.delay-5 { animation-delay: 0.5s; }
+
+/* ========== DURATION UTILITIES ========== */
+.duration-300 { animation-duration: 0.3s; }
+.duration-500 { animation-duration: 0.5s; }
+.duration-700 { animation-duration: 0.7s; }
+.duration-1000 { animation-duration: 1s; }
+
+/* ========== INFINITE UTILITIES ========== */
+.infinite {
+    animation-iteration-count: infinite;
+}
+
+.repeat-once {
+    animation-iteration-count: 1;
+}
+
+/* ========== EASING FUNCTIONS ========== */
+.ease-in {
+    animation-timing-function: ease-in;
+}
+
+.ease-out {
+    animation-timing-function: ease-out;
+}
+
+.ease-in-out {
+    animation-timing-function: ease-in-out;
+}
+
+.ease-linear {
+    animation-timing-function: linear;
+}

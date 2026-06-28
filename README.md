@@ -1,332 +1,176 @@
-# 📚 KPSS Tarih Öğrenme Uygulaması
+// ==========================================
+// JS/UTILS/CONSTANTS.JS
+// Global Constants & Enums
+// ==========================================
 
-**Duolingo tarzı, oyunlaştırılmış KPSS tarih müfredatı öğrenme platformu**
-
-## 🎯 Özellikler
-
-- ✅ **Modüler & Interaktif İçerik**: Kelime seçimi, coğrafi tespit
-- ✅ **10 Soruluk Döngü**: Adaptive testing, yanlış soruları yeniden soru
-- ✅ **Oyunlaştırma**: XP, rozetler, seviyelendirme
-- ✅ **Coğrafya Entegrasyonu**: Leaflet harita, Nominatim geocoding
-- ✅ **PWA**: Web + installable app, offline support
-- ✅ **Google Sheets Sync**: Verileriniz cloud'da güvenle saklanır
-- ✅ **Duolingo UI**: Mobile-first, sade, eğlenceli tasarım
-
----
-
-## 📦 Kurulum
-
-### Gereklilikler
-- GitHub hesabı
-- Claude API Key (Anthropic'den)
-- Google Sheets + Google Apps Script (opsiyonel, ileri özellik)
-- Modern browser (Chrome, Firefox, Safari, Edge)
-
-### Adımlar
-
-1. **Repo'yu clone et**
-   ```bash
-   git clone https://github.com/[username]/kpss-tarih-ogrenme.git
-   cd kpss-tarih-ogrenme
-   ```
-
-2. **API Keys ekle**
-   - `config.js` aç
-   - `CLAUDE_API_KEY` alanına API key'ini yapıştır
-   - `GOOGLE_SHEETS_ID` ve `GOOGLE_APPS_SCRIPT_URL` ekle (opsiyonel)
-
-3. **GitHub Pages'a deploy et**
-   ```bash
-   git add .
-   git commit -m "Initial commit"
-   git push origin main
-   ```
-
-4. **Erişim**
-   - `https://[username].github.io/kpss-tarih-ogrenme/`
-
----
-
-## 🏗️ Proje Yapısı
-
-```
-kpss-tarih-ogrenme/
-├── index.html                    # Ana sayfa (PWA entry point)
-├── manifest.json                 # PWA ayarları
-├── sw.js                         # Service Worker (offline)
-├── config.js                     # Global ayarlar & API keys
-├── css/
-│   ├── styles.css               # Ana stiller
-│   ├── responsive.css           # Responsive design
-│   └── animations.css           # Animasyonlar & transitions
-├── js/
-│   ├── app.js                   # Ana app logic
-│   ├── modules/
-│   │   ├── contentPool.js       # Content caching & AI integration
-│   │   ├── userProgress.js      # Kullanıcı ilerleme tracking
-│   │   ├── gameEngine.js        # XP, badges, döngü mantığı
-│   │   ├── uiRenderer.js        # DOM manipulation
-│   │   ├── geoServices.js       # Harita & geocoding
-│   │   ├── aiProvider.js        # Claude API wrapper
-│   │   └── googleSheets.js      # Google Sheets senkronizasyon
-│   └── utils/
-│       ├── helpers.js           # Utility functions
-│       └── constants.js         # Global constants
-├── data/
-│   └── curriculum.json          # KPSS müfredatı
-└── README.md                     # Bu dosya
-```
-
----
-
-## 🚀 Nasıl Çalışır?
-
-### 1. Öğrenme Akışı
-```
-Ünite Seç → Konuyu Aç → Bilgi Kartı (Interaktif Metin)
-  ↓
-Harita Gör (Coğrafya) → "Anladım" Butonu
-  ↓
-10 Soruluk Test Başla
-  ↓
-Doğru Cevap → XP + Açıklama
-Yanlış Cevap → Listenin Sonuna Ekle → Tekrar Sor
-  ↓
-Tamamlandı → Rozet & Seviyelendir
-```
-
-### 2. AI Entegrasyonu
-- **İlk Açılış**: Konu adı → Claude → metin, sorular, coğrafya referansları
-- **Caching**: Tüm içerik localStorage'a kaydedilir → 2. kullanıcı beklemez
-- **Coğrafya Tespiti**: AI otomatik yerler bulur → Nominatim'den koordinat çeker
-
-### 3. Oyunlaştırma
-- **XP**: Her doğru soru +50, konu tamamlama +150
-- **Seviyeler**: Tohum → Filiz → Ağaç → Orman → Efsane
-- **Rozetler**: Coğrafya Dedektifi, Tarih Ustası, etc.
-
----
-
-## ⚙️ Konfigürasyon
-
-`config.js` aç ve şunları ayarla:
-
-```javascript
-CONFIG = {
-    CLAUDE_API_KEY: 'sk-...', // Sana verilecek
-    GOOGLE_SHEETS_ID: 'xxx',  // (Opsiyonel)
-    XP_PER_QUESTION: 50,       // Soru başına XP
-    COLORS: {...},             // Tema renkleri
-    // ... daha fazla ayar
-}
-```
-
----
-
-## 🧠 AI İçerik Oluşturma
-
-### İlk Kez Açılan Bir Konuya Ne Olur?
-
-```javascript
-// 1. Kullanıcı konuya tıklar
-// 2. Cache'de yoksa:
-const content = await AI.generateSubtopic(unitId, topicId, subtopicId);
-// 3. AI döndürür:
-{
-    mainText: "Metin [seçilebilir kelimeler]...",
-    geoInfo: "Coğrafya köprüsü...",
-    geoReferences: [{ place: "Şehir", coords: [...] }],
-    questions: [{q: "...", options: [...], ...}]
-}
-// 4. localStorage'a cache
-// 5. UI'de render
-```
-
-### Kelime Seçimi (Interactive)
-Kullanıcı bir kelimeye basılı tutarsa:
-```
-Popup:
-"[Kelime]: Açıklama (1-2 cümle)"
-```
-
-### Harita (Coğrafi Tespit)
-Metin içindeki şehir/yer otomatik harita iconuyla işaretlenir. Tıklandığında:
-```
-Leaflet harita açılır
-↓
-Koordinatlar gösterilir
-↓
-Zoom & pan
-```
-
----
-
-## 📊 Veri Yapısı (JSON)
-
-### ContentPool Örneği
-```json
-{
-  "topic": {
-    "topicId": "topic_1_anav",
-    "mainText": "Anav, [Orta Asya]'nın...",
-    "geoReferences": [
-      {
-        "place": "Türkmenistan",
-        "coords": [38.9601, 59.5563],
-        "context": "Anav bulunduğu bölge"
-      }
-    ],
-    "questions": [
-      {
-        "q": "Anav hangi coğrafyada?",
-        "options": ["A", "B", "C"],
-        "answer": 1,
-        "explanations": ["...", "Doğru!", "..."]
-      }
-    ]
-  }
-}
-```
-
-### User Progress Örneği
-```json
-{
-  "userId": "user_123",
-  "xp": 250,
-  "badges": ["Coğrafya Dedektifi"],
-  "completedSubtopics": ["sub_1_1_1"],
-  "currentSubtopic": "sub_1_1_2",
-  "failedQuestions": [{ "qId": "q_1_1_1_3", "attempts": 1 }]
-}
-```
-
----
-
-## 🌐 Google Sheets Entegrasyonu (İleri)
-
-### Setup
-1. Google Sheets oluştur
-2. Google Apps Script yazıp deploy et
-3. `config.js`'e URL'i ekle
-
-### Veri Akışı
-```
-Kullanıcı Cevap Verir
-  ↓
-localStorage'a kaydedilir
-  ↓
-Background sync (Service Worker)
-  ↓
-Google Sheets'e POST
-  ↓
-Liderlik tablosu güncellenir
-```
-
----
-
-## 📱 PWA Yükleme
-
-### Chrome/Edge
-1. Siteyi aç
-2. Sağ üst köşe menü → "Yükle"
-3. Başlat menüsüne eklenir
-
-### Safari (iOS)
-1. Siteyi aç
-2. Paylaş → Ana Ekrana Ekle
-3. Homescreen'de app gibi açılır
-
----
-
-## 🐛 Troubleshooting
-
-### "API Key error"
-→ `config.js`'de CLAUDE_API_KEY boş mı? Ekle.
-
-### "Cache error"
-→ DevTools → Application → Clear Storage → Yenile
-
-### "Maps not loading"
-→ Nominatim overburdened. 5sn sonra tekrar dene.
-
-### "Offline mode"
-→ Service Worker sayesinde app offline çalışır (sadece cached content)
-
----
-
-## 📚 KPSS Müfredatı
-
-`data/curriculum.json` şu yapıya sahip:
-
-```json
-{
-  "units": [
-    {
-      "unitId": "unit_1",
-      "unitName": "İslamiyet Öncesi Türk Devletleri",
-      "topics": [
-        {
-          "topicId": "topic_1_1",
-          "topicName": "Anav Kültürü",
-          "subtopics": [...]
-        }
-      ]
-    }
-  ]
-}
-```
-
----
-
-## 🛠️ Geliştirme
-
-### Yeni Feature Eklemek
-1. İlgili modülü düzenle (js/modules/)
-2. `app.js`'de entegre et
-3. Test et
-4. Commit & Push
-
-### CSS Özelleştirme
-- `css/styles.css`: Global
-- `css/responsive.css`: Breakpoints
-- `css/animations.css`: Keyframes
-
-### Yeni Modül Oluşturmak
-```javascript
-// js/modules/myModule.js
-class MyModule {
-    constructor() {
-        // Init
-    }
+const CONSTANTS = {
+    // ========== APP STATES ==========
+    STATES: {
+        LOADING: 'loading',
+        HOME: 'home',
+        UNIT_SELECT: 'unit_select',
+        INFO_CARD: 'info_card',
+        QUESTION: 'question',
+        RESULT: 'result',
+        COMPLETION: 'completion',
+        LEADERBOARD: 'leaderboard',
+        SETTINGS: 'settings',
+        ERROR: 'error'
+    },
     
-    method() {
-        // Logic
+    // ========== EVENTS ==========
+    EVENTS: {
+        ANSWER_SUBMITTED: 'answer_submitted',
+        QUESTION_CORRECT: 'question_correct',
+        QUESTION_WRONG: 'question_wrong',
+        SUBTOPIC_COMPLETED: 'subtopic_completed',
+        BADGE_UNLOCKED: 'badge_unlocked',
+        LEVEL_UP: 'level_up',
+        XP_GAINED: 'xp_gained',
+        CONTENT_LOADED: 'content_loaded',
+        ERROR_OCCURRED: 'error_occurred'
+    },
+    
+    // ========== ERROR CODES ==========
+    ERRORS: {
+        API_KEY_MISSING: 'API_KEY_MISSING',
+        NETWORK_ERROR: 'NETWORK_ERROR',
+        PARSING_ERROR: 'PARSING_ERROR',
+        STORAGE_ERROR: 'STORAGE_ERROR',
+        CONTENT_NOT_FOUND: 'CONTENT_NOT_FOUND',
+        INVALID_CONFIG: 'INVALID_CONFIG'
+    },
+    
+    // ========== LOG LEVELS ==========
+    LOG_LEVELS: {
+        DEBUG: 0,
+        INFO: 1,
+        WARN: 2,
+        ERROR: 3
+    },
+    
+    // ========== NAVIGATION TABS ==========
+    NAV_TABS: {
+        LEARN: 'learn',
+        LEADERBOARD: 'leaderboard',
+        REVIEW: 'review',
+        STATS: 'stats'
+    },
+    
+    // ========== UI ANIMATIONS ==========
+    ANIMATIONS: {
+        FADE_IN: 'fade-in',
+        FADE_OUT: 'fade-out',
+        SLIDE_IN_UP: 'slide-in-up',
+        SCALE_IN: 'scale-in',
+        BOUNCE: 'bounce',
+        PULSE: 'pulse',
+        GLOW: 'glow'
+    },
+    
+    // ========== DURATIONS (ms) ==========
+    DURATIONS: {
+        SHORT: 300,
+        MEDIUM: 500,
+        LONG: 1000,
+        EXTRA_LONG: 2000
+    },
+    
+    // ========== TOAST TYPES ==========
+    TOAST_TYPES: {
+        SUCCESS: 'success',
+        ERROR: 'error',
+        INFO: 'info',
+        WARNING: 'warning'
+    },
+    
+    // ========== BADGE RARITY ==========
+    BADGE_RARITY: {
+        COMMON: 'common',
+        UNCOMMON: 'uncommon',
+        RARE: 'rare',
+        LEGENDARY: 'legendary'
+    },
+    
+    // ========== DIFFICULTY LEVELS ==========
+    DIFFICULTY: {
+        EASY: 'easy',
+        MEDIUM: 'medium',
+        HARD: 'hard',
+        EXPERT: 'expert'
+    },
+    
+    // ========== API REQUEST METHODS ==========
+    HTTP_METHODS: {
+        GET: 'GET',
+        POST: 'POST',
+        PUT: 'PUT',
+        DELETE: 'DELETE'
+    },
+    
+    // ========== CACHE EXPIRY (ms) ==========
+    CACHE_EXPIRY: {
+        SHORT: 5 * 60 * 1000,           // 5 min
+        MEDIUM: 30 * 60 * 1000,         // 30 min
+        LONG: 24 * 60 * 60 * 1000,      // 24 hours
+        PERMANENT: null                 // Never expires
+    },
+    
+    // ========== REGEX PATTERNS ==========
+    PATTERNS: {
+        EMAIL: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+        URL: /^https?:\/\/.+/,
+        LATITUDE: /^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?)$/,
+        LONGITUDE: /^[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$/,
+        WORD: /\b\w+\b/g,
+        PLACE_NAME: /[A-Z][a-zşğıöüç\s]+/g
+    },
+    
+    // ========== SORTING OPTIONS ==========
+    SORT_OPTIONS: {
+        DATE_ASC: 'date_asc',
+        DATE_DESC: 'date_desc',
+        NAME_ASC: 'name_asc',
+        NAME_DESC: 'name_desc',
+        XP_HIGH: 'xp_high',
+        XP_LOW: 'xp_low'
+    },
+    
+    // ========== FILTER OPTIONS ==========
+    FILTER_OPTIONS: {
+        COMPLETED: 'completed',
+        IN_PROGRESS: 'in_progress',
+        LOCKED: 'locked',
+        FAILED: 'failed',
+        ALL: 'all'
+    },
+    
+    // ========== TIME UNITS ==========
+    TIME_UNITS: {
+        MILLISECONDS: 'ms',
+        SECONDS: 's',
+        MINUTES: 'min',
+        HOURS: 'h',
+        DAYS: 'd',
+        WEEKS: 'w',
+        MONTHS: 'mo',
+        YEARS: 'y'
+    },
+    
+    // ========== KEYBOARD KEYS ==========
+    KEYS: {
+        ENTER: 'Enter',
+        ESCAPE: 'Escape',
+        SPACE: ' ',
+        ARROW_UP: 'ArrowUp',
+        ARROW_DOWN: 'ArrowDown',
+        ARROW_LEFT: 'ArrowLeft',
+        ARROW_RIGHT: 'ArrowRight',
+        TAB: 'Tab'
     }
+};
+
+// Export for Node.js compatibility
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = CONSTANTS;
 }
-```
-
----
-
-## 📄 Lisans
-
-MIT License - Özgürce kullan ve modifiye et.
-
----
-
-## 🤝 Katkılar
-
-Sorular, öneriler, bug reports için GitHub Issues'i kullan.
-
----
-
-## 📞 İletişim
-
-- **Author**: [Senin adın]
-- **GitHub**: [GitHub profilin]
-- **Email**: [E-mail]
-
----
-
-**Made with ❤️ for KPSS Candidates**
-
-🚀 Başarılar dilerim! Good luck with your exam!
