@@ -12,7 +12,6 @@ class AIProvider {
         return this.proxyURL && this.proxyURL.length > 0;
     }
 
-    // ========== SUBTOPIC CONTENT GENERATION ==========
     async generateSubtopicContent(unitName, topicName, subtopicName) {
         if (!this.isConfigured()) {
             throw new Error(CONSTANTS.ERRORS.API_KEY_MISSING);
@@ -23,9 +22,7 @@ class AIProvider {
         try {
             const response = await this.callGeminiAPI(prompt, 2000);
             const content = this.parseJSONResponse(response);
-            
             this.validateSubtopicContent(content);
-            
             return content;
         } catch (error) {
             Logger.error('AI content generation failed', error);
@@ -45,7 +42,7 @@ class AIProvider {
         const required = ['mainText', 'geoInfo', 'questions'];
         for (const field of required) {
             if (!content[field]) {
-                throw new Error(`Missing required field: ${field}`);
+                throw new Error('Missing required field: ' + field);
             }
         }
 
@@ -53,33 +50,28 @@ class AIProvider {
             throw new Error('Questions array is empty or invalid');
         }
 
-        // Her sorunun en az 3 seçeneği ve 1 doğru cevabı olmalı
-        content.questions.forEach((q, i) => {
+        content.questions.forEach(function(q, i) {
             if (!q.options || q.options.length < 3) {
-                throw new Error(`Question ${i} has insufficient options`);
+                throw new Error('Question ' + i + ' has insufficient options');
             }
-            const hasCorrect = q.options.some(o => o.correct === true);
+            var hasCorrect = q.options.some(function(o) { return o.correct === true; });
             if (!hasCorrect) {
-                throw new Error(`Question ${i} has no correct answer marked`);
+                throw new Error('Question ' + i + ' has no correct answer marked');
             }
-            // qId ekle eğer yoksa
             if (!q.qId) {
                 q.qId = Helpers.generateId('q');
             }
         });
 
-        // geoReferences yoksa boş array yap
         if (!content.geoReferences) {
             content.geoReferences = [];
         }
 
-        // interactiveWords yoksa boş array yap
         if (!content.interactiveWords) {
             content.interactiveWords = [];
         }
     }
 
-    // ========== WORD EXPLANATION ==========
     async generateWordExplanation(word, context) {
         if (!this.isConfigured()) {
             return 'AI servisi yapılandırılmamış.';
@@ -98,13 +90,9 @@ class AIProvider {
         }
     }
 
-    // ========== CORE API CALL (via Apps Script Proxy) ==========
-    async callGeminiAPI(prompt, maxTokens = 1000) {
+    async callGeminiAPI(prompt, maxTokens) {
         const response = await fetch(this.proxyURL, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
             body: JSON.stringify({
                 prompt: prompt,
                 maxTokens: maxTokens
@@ -113,7 +101,7 @@ class AIProvider {
 
         if (!response.ok) {
             const errorBody = await response.text();
-            throw new Error(`Gemini API error (${response.status}): ${errorBody}`);
+            throw new Error('Gemini API error (' + response.status + '): ' + errorBody);
         }
 
         const data = await response.json();
@@ -121,12 +109,11 @@ class AIProvider {
     }
 
     extractTextResponse(apiResponse) {
-        // Gemini API response yapısı: { candidates: [{ content: { parts: [{ text: "..." }] } }] }
         try {
             if (apiResponse.candidates && apiResponse.candidates.length > 0) {
                 const parts = apiResponse.candidates[0].content.parts;
                 if (parts && parts.length > 0) {
-                    return parts.map(p => p.text).join('\n').trim();
+                    return parts.map(function(p) { return p.text; }).join('\n').trim();
                 }
             }
             return '';
@@ -138,8 +125,7 @@ class AIProvider {
 
     parseJSONResponse(apiResponse) {
         const text = this.extractTextResponse(apiResponse);
-        
-        // JSON fence'leri temizle (```json ... ```)
+
         const cleaned = text
             .replace(/```json\s*/g, '')
             .replace(/```\s*/g, '')
@@ -148,31 +134,30 @@ class AIProvider {
         try {
             return JSON.parse(cleaned);
         } catch (error) {
-            Logger.error('JSON parsing failed', { text: cleaned, error });
+            Logger.error('JSON parsing failed', { text: cleaned, error: error });
             throw new Error(CONSTANTS.ERRORS.PARSING_ERROR);
         }
     }
 
-    // ========== RETRY LOGIC ==========
-    async callWithRetry(fn, maxRetries = 2, delay = 1000) {
-        let lastError;
-        
-        for (let i = 0; i <= maxRetries; i++) {
+    async callWithRetry(fn, maxRetries, delay) {
+        maxRetries = maxRetries || 2;
+        delay = delay || 1000;
+        var lastError;
+
+        for (var i = 0; i <= maxRetries; i++) {
             try {
                 return await fn();
             } catch (error) {
                 lastError = error;
-                Logger.warn(`API call failed, attempt ${i + 1}/${maxRetries + 1}`, error);
-                
+                Logger.warn('API call failed, attempt ' + (i + 1) + '/' + (maxRetries + 1), error);
                 if (i < maxRetries) {
                     await Helpers.sleep(delay * (i + 1));
                 }
             }
         }
-        
+
         throw lastError;
     }
 }
 
-// Global instance
 window.aiProviderInstance = null;

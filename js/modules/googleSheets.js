@@ -14,7 +14,6 @@ class GoogleSheetsSync {
         return this.appsScriptUrl && this.appsScriptUrl.length > 0;
     }
 
-    // ========== USER PROGRESS SYNC ==========
     async saveUserProgress(userData) {
         if (!this.isConfigured()) {
             Logger.debug('Google Sheets not configured, skipping sync');
@@ -24,7 +23,6 @@ class GoogleSheetsSync {
         try {
             const response = await fetch(this.appsScriptUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     action: 'saveProgress',
                     userId: userData.userId,
@@ -40,7 +38,7 @@ class GoogleSheetsSync {
             });
 
             if (!response.ok) {
-                throw new Error(`Sheets sync failed: ${response.status}`);
+                throw new Error('Sheets sync failed: ' + response.status);
             }
 
             return await response.json();
@@ -61,7 +59,7 @@ class GoogleSheetsSync {
             data: userData,
             timestamp: Date.now()
         });
-        
+
         if (this.syncQueue.length > 10) {
             this.syncQueue.shift();
         }
@@ -69,11 +67,11 @@ class GoogleSheetsSync {
 
     async processSyncQueue() {
         if (this.isSyncing || this.syncQueue.length === 0) return;
-        
+
         this.isSyncing = true;
-        
+
         while (this.syncQueue.length > 0) {
-            const item = this.syncQueue.shift();
+            var item = this.syncQueue.shift();
             try {
                 await this.saveUserProgress(item.data);
             } catch (error) {
@@ -81,21 +79,22 @@ class GoogleSheetsSync {
                 break;
             }
         }
-        
+
         this.isSyncing = false;
     }
 
-    // ========== LEADERBOARD ==========
-    async getLeaderboard(limit = 10) {
+    async getLeaderboard(limit) {
+        limit = limit || 10;
+
         if (!this.isConfigured()) {
             return this.getMockLeaderboard();
         }
 
         try {
-            const response = await fetch(`${this.appsScriptUrl}?action=getLeaderboard&limit=${limit}`);
-            
+            const response = await fetch(this.appsScriptUrl + '?action=getLeaderboard&limit=' + limit);
+
             if (!response.ok) {
-                throw new Error(`Leaderboard fetch failed: ${response.status}`);
+                throw new Error('Leaderboard fetch failed: ' + response.status);
             }
 
             const data = await response.json();
@@ -107,7 +106,7 @@ class GoogleSheetsSync {
     }
 
     getMockLeaderboard() {
-        const userProgress = window.userProgressInstance;
+        var userProgress = window.userProgressInstance;
         if (!userProgress) return [];
 
         return [
@@ -121,14 +120,12 @@ class GoogleSheetsSync {
         ];
     }
 
-    // ========== CONTENT POOL BACKUP (opsiyonel) ==========
     async backupContentPool(contentPoolData) {
         if (!this.isConfigured()) return null;
 
         try {
             const response = await fetch(this.appsScriptUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     action: 'backupContent',
                     content: JSON.stringify(contentPoolData),
@@ -147,9 +144,9 @@ class GoogleSheetsSync {
         if (!this.isConfigured()) return null;
 
         try {
-            const response = await fetch(`${this.appsScriptUrl}?action=getContentBackup`);
+            const response = await fetch(this.appsScriptUrl + '?action=getContentBackup');
             const data = await response.json();
-            
+
             if (data.content) {
                 return JSON.parse(data.content);
             }
@@ -161,12 +158,4 @@ class GoogleSheetsSync {
     }
 }
 
-// ==========================================
-// GOOGLE APPS SCRIPT TEMPLATE (Backend)
-// ==========================================
-// Bu kodu Google Apps Script'e yapıştırıp deploy etmen gerekiyor.
-// Ayrıntılı kurulum talimatı: docs/GOOGLE_SHEETS_SETUP.md
-// ==========================================
-
-// Global instance
 window.googleSheetsInstance = null;
