@@ -1,361 +1,61 @@
-// ==========================================
-// JS/MODULES/USERPROGRESS.JS
-// User Progress & State Management
-// ==========================================
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1a1a2e">
+    <meta name="description" content="KPSS Tarih Müfredatı - İnteraktif Öğrenme Uygulaması">
+    
+    <title>KPSS Tarih Öğrenme</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%231a1a2e' width='180' height='180'/><text x='50%' y='50%' font-size='90' fill='%23ffd700' text-anchor='middle' dominant-baseline='middle' font-family='Arial' font-weight='bold'>⚔</text></svg>">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/animations.css">
+    
+    <!-- Leaflet (Harita) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+</head>
+<body>
+    <!-- Main App Container -->
+    <div id="app" class="app-container">
+        <!-- Loading Screen -->
+        <div id="loading" class="loading-screen">
+            <div class="spinner"></div>
+            <p>Yükleniyor...</p>
+        </div>
+        
+        <!-- Main Content (dynamically rendered) -->
+        <div id="main-content" class="hidden"></div>
+    </div>
 
-class UserProgress {
-    constructor() {
-        this.data = this.load();
-        this.googleSheets = null; // app.js'de set edilecek
-    }
+    <!-- Modal Container -->
+    <div id="modal-container"></div>
 
-    setGoogleSheetsSync(syncInstance) {
-        this.googleSheets = syncInstance;
-    }
+    <!-- Modüller (Order önemli!) -->
+    <script src="config.js"></script>
+    <script src="js/utils/constants.js"></script>
+    <script src="js/utils/helpers.js"></script>
+    <script src="js/modules/contentPool.js"></script>
+    <script src="js/modules/userProgress.js"></script>
+    <script src="js/modules/gameEngine.js"></script>
+    <script src="js/modules/geoServices.js"></script>
+    <script src="js/modules/uiRenderer.js"></script>
+    <script src="js/modules/aiProvider.js"></script>
+    <script src="js/modules/googleSheets.js"></script>
+    <script src="js/app.js"></script>
 
-    load() {
-        const defaultData = {
-            userId: Helpers.getOrCreateUserId(),
-            displayName: '',
-            xp: 0,
-            level: 'Tohum',
-            badges: [],
-            completedSubtopics: [],
-            completedTopics: [],
-            currentUnitId: null,
-            currentTopicId: null,
-            currentSubtopicId: null,
-            failedQuestions: [],
-            reviewQueue: [], // Gözden geçir için
-            weeklyStats: {},
-            totalQuestionsAnswered: 0,
-            totalCorrectAnswers: 0,
-            streak: 0,
-            lastActiveDate: null,
-            createdAt: new Date().toISOString()
-        };
-
-        const saved = Helpers.loadFromStorage(CONFIG.LOCAL_STORAGE_KEYS.USER_PROGRESS, {});
-        return { ...defaultData, ...saved };
-    }
-
-    save() {
-        Helpers.saveToStorage(CONFIG.LOCAL_STORAGE_KEYS.USER_PROGRESS, this.data);
-        this.updateStreak();
-        this.syncToCloud();
-    }
-
-    async syncToCloud() {
-        if (this.googleSheets) {
-            try {
-                await this.googleSheets.saveUserProgress(this.data);
-            } catch (error) {
-                Logger.warn('Cloud sync failed, will retry later', error);
-            }
+    <script>
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('✅ Service Worker registered'))
+                .catch(err => console.warn('⚠️ SW registration failed:', err));
         }
-    }
-
-    // ========== XP & LEVEL ==========
-    addXP(amount) {
-        this.data.xp += amount;
-        this.checkLevelUp();
-        this.save();
-        
-        EventBus.emit(CONSTANTS.EVENTS.XP_GAINED, { amount, total: this.data.xp });
-        
-        return this.data.xp;
-    }
-
-    checkLevelUp() {
-        const levels = CONFIG.LEVELS;
-        let newLevel = levels[0].name;
-        
-        for (const level of levels) {
-            if (this.data.xp >= level.minXP) {
-                newLevel = level.name;
-            }
-        }
-        
-        if (newLevel !== this.data.level) {
-            const oldLevel = this.data.level;
-            this.data.level = newLevel;
-            EventBus.emit(CONSTANTS.EVENTS.LEVEL_UP, { oldLevel, newLevel });
-            return true;
-        }
-        return false;
-    }
-
-    getCurrentLevelInfo() {
-        return CONFIG.LEVELS.find(l => l.name === this.data.level) || CONFIG.LEVELS[0];
-    }
-
-    getNextLevelInfo() {
-        const currentIndex = CONFIG.LEVELS.findIndex(l => l.name === this.data.level);
-        return CONFIG.LEVELS[currentIndex + 1] || null;
-    }
-
-    getXPProgress() {
-        const current = this.getCurrentLevelInfo();
-        const next = this.getNextLevelInfo();
-        
-        if (!next) return 100; // Max level
-        
-        const range = next.minXP - current.minXP;
-        const progress = this.data.xp - current.minXP;
-        return Math.min(100, Math.round((progress / range) * 100));
-    }
-
-    // ========== BADGES ==========
-    unlockBadge(badgeId) {
-        if (this.data.badges.includes(badgeId)) {
-            return false; // Already unlocked
-        }
-
-        const badge = CONFIG.BADGES.find(b => b.id === badgeId);
-        if (!badge) {
-            Logger.warn(`Badge not found: ${badgeId}`);
-            return false;
-        }
-
-        this.data.badges.push(badgeId);
-        this.addXP(badge.xp);
-        this.save();
-
-        EventBus.emit(CONSTANTS.EVENTS.BADGE_UNLOCKED, badge);
-        return true;
-    }
-
-    hasBadge(badgeId) {
-        return this.data.badges.includes(badgeId);
-    }
-
-    getUnlockedBadges() {
-        return CONFIG.BADGES.filter(b => this.hasBadge(b.id));
-    }
-
-    getLockedBadges() {
-        return CONFIG.BADGES.filter(b => !this.hasBadge(b.id));
-    }
-
-    // ========== ANSWER TRACKING ==========
-    recordAnswer(questionId, isCorrect, subtopicId) {
-        this.data.totalQuestionsAnswered++;
-        
-        if (isCorrect) {
-            this.data.totalCorrectAnswers++;
-            this.addXP(CONFIG.XP_PER_QUESTION);
-            EventBus.emit(CONSTANTS.EVENTS.QUESTION_CORRECT, { questionId, subtopicId });
-        } else {
-            this.addToReviewQueue(questionId, subtopicId);
-            EventBus.emit(CONSTANTS.EVENTS.QUESTION_WRONG, { questionId, subtopicId });
-        }
-
-        this.save();
-    }
-
-    addToReviewQueue(questionId, subtopicId) {
-        const existing = this.data.failedQuestions.find(f => f.qId === questionId);
-        
-        if (existing) {
-            existing.attempts++;
-            existing.lastAttempt = new Date().toISOString();
-        } else {
-            this.data.failedQuestions.push({
-                qId: questionId,
-                subtopicId,
-                attempts: 1,
-                lastAttempt: new Date().toISOString()
-            });
-        }
-    }
-
-    removeFromReviewQueue(questionId) {
-        this.data.failedQuestions = this.data.failedQuestions.filter(f => f.qId !== questionId);
-        this.save();
-    }
-
-    getReviewQueue() {
-        return this.data.failedQuestions;
-    }
-
-    getAccuracy() {
-        if (this.data.totalQuestionsAnswered === 0) return 0;
-        return Math.round((this.data.totalCorrectAnswers / this.data.totalQuestionsAnswered) * 100);
-    }
-
-    // ========== SUBTOPIC PROGRESS ==========
-    completeSubtopic(subtopicId, unitId, topicId) {
-        if (this.data.completedSubtopics.includes(subtopicId)) {
-            return; // Already completed
-        }
-
-        this.data.completedSubtopics.push(subtopicId);
-        this.addXP(CONFIG.XP_PER_COMPLETED_SUBTOPIC);
-        
-        EventBus.emit(CONSTANTS.EVENTS.SUBTOPIC_COMPLETED, { subtopicId, unitId, topicId });
-        
-        this.save();
-    }
-
-    isSubtopicCompleted(subtopicId) {
-        return this.data.completedSubtopics.includes(subtopicId);
-    }
-
-    completeTopic(topicId) {
-        if (!this.data.completedTopics.includes(topicId)) {
-            this.data.completedTopics.push(topicId);
-            this.save();
-        }
-    }
-
-    isTopicCompleted(topicId) {
-        return this.data.completedTopics.includes(topicId);
-    }
-
-    // ========== CURRENT POSITION ==========
-    setCurrentPosition(unitId, topicId, subtopicId) {
-        this.data.currentUnitId = unitId;
-        this.data.currentTopicId = topicId;
-        this.data.currentSubtopicId = subtopicId;
-        this.save();
-    }
-
-    getCurrentPosition() {
-        return {
-            unitId: this.data.currentUnitId,
-            topicId: this.data.currentTopicId,
-            subtopicId: this.data.currentSubtopicId
-        };
-    }
-
-    hasStarted() {
-        return this.data.currentSubtopicId !== null;
-    }
-
-    // ========== UNLOCKING LOGIC ==========
-    isSubtopicUnlocked(subtopicId, allSubtopicsInOrder) {
-        const index = allSubtopicsInOrder.findIndex(s => s.subtopicId === subtopicId);
-        
-        if (index === 0) return true; // İlk konu her zaman açık
-        
-        const previousSubtopic = allSubtopicsInOrder[index - 1];
-        return this.isSubtopicCompleted(previousSubtopic.subtopicId);
-    }
-
-    isTopicUnlocked(topicId, allTopicsInOrder) {
-        const index = allTopicsInOrder.findIndex(t => t.topicId === topicId);
-        
-        if (index === 0) return true;
-        
-        const previousTopic = allTopicsInOrder[index - 1];
-        return this.isTopicCompleted(previousTopic.topicId);
-    }
-
-    // ========== STREAK TRACKING ==========
-    updateStreak() {
-        const today = new Date().toDateString();
-        const lastActive = this.data.lastActiveDate ? new Date(this.data.lastActiveDate).toDateString() : null;
-
-        if (lastActive === today) {
-            return; // Already counted today
-        }
-
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-
-        if (lastActive === yesterday.toDateString()) {
-            this.data.streak++;
-        } else if (lastActive !== today) {
-            this.data.streak = 1; // Reset streak
-        }
-
-        this.data.lastActiveDate = new Date().toISOString();
-    }
-
-    getStreak() {
-        return this.data.streak;
-    }
-
-    // ========== WEEKLY STATS ==========
-    recordWeeklyActivity() {
-        const week = Helpers.getWeekNumber();
-        const year = new Date().getFullYear();
-        const key = `${year}_W${week}`;
-
-        if (!this.data.weeklyStats[key]) {
-            this.data.weeklyStats[key] = {
-                questionsAnswered: 0,
-                correctAnswers: 0,
-                xpEarned: 0,
-                subtopicsCompleted: 0
-            };
-        }
-
-        return this.data.weeklyStats[key];
-    }
-
-    getWeeklyStats(weeksBack = 4) {
-        const stats = [];
-        const now = new Date();
-        
-        for (let i = 0; i < weeksBack; i++) {
-            const date = new Date(now);
-            date.setDate(date.getDate() - (i * 7));
-            const week = Helpers.getWeekNumber(date);
-            const year = date.getFullYear();
-            const key = `${year}_W${week}`;
-            
-            stats.unshift({
-                week: key,
-                ...(this.data.weeklyStats[key] || {
-                    questionsAnswered: 0,
-                    correctAnswers: 0,
-                    xpEarned: 0,
-                    subtopicsCompleted: 0
-                })
-            });
-        }
-        
-        return stats;
-    }
-
-    // ========== RESET (Debug/Testing) ==========
-    reset() {
-        if (confirm('Tüm ilerleme silinecek. Onaylıyor musunuz?')) {
-            Helpers.removeFromStorage(CONFIG.LOCAL_STORAGE_KEYS.USER_PROGRESS);
-            this.data = this.load();
-            location.reload();
-        }
-    }
-
-    exportData() {
-        return JSON.stringify(this.data, null, 2);
-    }
-}
-
-// ==========================================
-// EVENT BUS - Simple pub/sub system
-// ==========================================
-const EventBus = {
-    listeners: {},
-
-    on(event, callback) {
-        if (!this.listeners[event]) {
-            this.listeners[event] = [];
-        }
-        this.listeners[event].push(callback);
-    },
-
-    off(event, callback) {
-        if (!this.listeners[event]) return;
-        this.listeners[event] = this.listeners[event].filter(cb => cb !== callback);
-    },
-
-    emit(event, data) {
-        if (!this.listeners[event]) return;
-        this.listeners[event].forEach(callback => callback(data));
-    }
-};
-
-// Global instance
-window.userProgressInstance = null;
+    </script>
+</body>
+</html>
