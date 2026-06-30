@@ -39,37 +39,51 @@ class AIProvider {
     }
 
     validateSubtopicContent(content) {
-        const required = ['mainText', 'geoInfo', 'questions'];
+        const required = ['lessonCards', 'quickTest', 'matchPairs', 'fullTest', 'flashcards'];
         for (const field of required) {
-            if (!content[field]) {
-                throw new Error('Missing required field: ' + field);
+            if (!Array.isArray(content[field]) || content[field].length === 0) {
+                throw new Error('Missing or empty required field: ' + field);
             }
         }
 
-        if (!Array.isArray(content.questions) || content.questions.length === 0) {
-            throw new Error('Questions array is empty or invalid');
-        }
-
-        content.questions.forEach(function(q, i) {
-            if (!q.options || q.options.length < 3) {
-                throw new Error('Question ' + i + ' has insufficient options');
+        content.lessonCards.forEach(function(card, i) {
+            if (!card.title || !card.text || !card.quiz) {
+                throw new Error('lessonCards[' + i + '] is missing title/text/quiz');
             }
-            var hasCorrect = q.options.some(function(o) { return o.correct === true; });
-            if (!hasCorrect) {
-                throw new Error('Question ' + i + ' has no correct answer marked');
-            }
-            if (!q.qId) {
-                q.qId = Helpers.generateId('q');
+            if (!Array.isArray(card.quiz.opts) || card.quiz.opts.length < 3) {
+                throw new Error('lessonCards[' + i + '] quiz has insufficient options');
             }
         });
 
-        if (!content.geoReferences) {
-            content.geoReferences = [];
-        }
+        content.quickTest.forEach(function(q, i) {
+            if (!Array.isArray(q.opts) || q.opts.length < 3) {
+                throw new Error('quickTest[' + i + '] has insufficient options');
+            }
+            if (typeof q.correct !== 'number') {
+                throw new Error('quickTest[' + i + '] missing correct index');
+            }
+        });
 
-        if (!content.interactiveWords) {
-            content.interactiveWords = [];
-        }
+        content.fullTest.forEach(function(q, i) {
+            if (!Array.isArray(q.opts) || q.opts.length < 4) {
+                throw new Error('fullTest[' + i + '] has insufficient options');
+            }
+            if (typeof q.correct !== 'number') {
+                throw new Error('fullTest[' + i + '] missing correct index');
+            }
+        });
+
+        content.matchPairs.forEach(function(p, i) {
+            if (!p.term || !p.def) {
+                throw new Error('matchPairs[' + i + '] missing term/def');
+            }
+        });
+
+        content.flashcards.forEach(function(c, i) {
+            if (!c.front || !c.back) {
+                throw new Error('flashcards[' + i + '] missing front/back');
+            }
+        });
     }
 
     async generateWordExplanation(word, context) {

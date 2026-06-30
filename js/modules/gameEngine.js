@@ -46,100 +46,15 @@ class GameEngine {
         };
     }
 
-    // ========== ANSWER HANDLING ==========
-    submitAnswer(selectedOptionIndex) {
-        const question = this.getCurrentQuestion();
-        if (!question) {
-            Logger.error('No current question to answer');
-            return null;
+    // ========== ANSWER HANDLING (yeni renderQuestion motoru için) ==========
+    // Soru zaten cevaplandı (renderQuestion içinde); burada sadece ilerlet ve sayaç tut.
+    advanceToNext(wasCorrect) {
+        if (wasCorrect) {
+            this.currentSession.correctCount++;
         }
-
         this.currentSession.totalAttempts++;
-        const selectedOption = question.options[selectedOptionIndex];
-        const isCorrect = selectedOption.correct;
-
-        const qId = question.qId || question.q; // Fallback to question text as ID
-
-        if (isCorrect) {
-            return this.handleCorrectAnswer(question, qId);
-        } else {
-            return this.handleWrongAnswer(question, qId);
-        }
-    }
-
-    handleCorrectAnswer(question, qId) {
-        this.currentSession.correctCount++;
-        
-        // Eğer bu soru daha önce yanlış bilinmiş ve şimdi doğru bilindiyse
-        const wrongCount = this.currentSession.wrongAnswerCount[qId] || 0;
-
-        // Kullanıcı progress'i güncelle
-        this.userProgress.recordAnswer(qId, true, this.currentSession.subtopicId);
-
-        const result = {
-            status: 'correct',
-            question,
-            wasRetry: wrongCount > 0,
-            explanation: this.getCorrectExplanation(question),
-            xpGained: CONFIG.XP_PER_QUESTION
-        };
-
-        this.advanceToNext();
-        
-        return result;
-    }
-
-    handleWrongAnswer(question, qId) {
-        const currentWrongCount = (this.currentSession.wrongAnswerCount[qId] || 0) + 1;
-        this.currentSession.wrongAnswerCount[qId] = currentWrongCount;
-
-        this.userProgress.recordAnswer(qId, false, this.currentSession.subtopicId);
-
-        if (currentWrongCount >= 2) {
-            // İkinci yanlış: doğru cevabı göster ve döngüyü sonlandır (bu soru için)
-            const result = {
-                status: 'final_wrong',
-                question,
-                correctAnswer: question.options.find(o => o.correct),
-                explanation: this.getCorrectExplanation(question),
-                wrongCount: currentWrongCount
-            };
-
-            this.advanceToNext();
-            return result;
-        } else {
-            // İlk yanlış: soruyu listenin sonuna ekle
-            this.requeueQuestion();
-
-            const result = {
-                status: 'wrong_requeue',
-                question,
-                wrongCount: currentWrongCount
-            };
-
-            return result;
-        }
-    }
-
-    requeueQuestion() {
-        const question = this.currentSession.questions[this.currentSession.currentIndex];
-        
-        // Şu anki sorudan sonraki tüm soruları al
-        const remainingQuestions = this.currentSession.questions.slice(this.currentSession.currentIndex + 1);
-        
-        // Bu soruyu sona ekle
-        this.currentSession.questions = [
-            ...this.currentSession.questions.slice(0, this.currentSession.currentIndex),
-            ...remainingQuestions,
-            question
-        ];
-
-        // currentIndex değişmez, çünkü şu anki soru kaldırıldı ve yeni soru onun yerine geldi
-    }
-
-    advanceToNext() {
         this.currentSession.currentIndex++;
-        
+
         if (this.currentSession.currentIndex >= this.currentSession.questions.length) {
             this.completeSession();
         }
@@ -150,21 +65,6 @@ class GameEngine {
         this.currentSession.endTime = Date.now();
         this.currentSession.duration = this.currentSession.endTime - this.currentSession.startTime;
 
-        // Subtopic'i tamamlandı olarak işaretle
-        this.userProgress.completeSubtopic(
-            this.currentSession.subtopicId,
-            this.currentSession.unitId,
-            this.currentSession.topicId
-        );
-
-        // Perfect score badge kontrolü
-        const hadAnyWrong = Object.keys(this.currentSession.wrongAnswerCount).length > 0;
-        if (!hadAnyWrong) {
-            this.checkPerfectScoreBadge();
-        }
-
-        this.checkSpeedBadge();
-        
         Logger.success('Session completed', {
             subtopicId: this.currentSession.subtopicId,
             duration: this.currentSession.duration,
@@ -192,7 +92,7 @@ class GameEngine {
             totalAttempts: this.currentSession.totalAttempts,
             accuracy: this.calculateSessionAccuracy(),
             duration: this.currentSession.duration,
-            perfectScore: Object.keys(this.currentSession.wrongAnswerCount).length === 0
+            perfectScore: this.currentSession.correctCount === this.currentSession.originalQuestions.length
         };
     }
 
@@ -217,7 +117,7 @@ class GameEngine {
         // İlk kusursuz konu tamamlamada rozet
         const completedCount = this.userProgress.data.completedSubtopics.length;
         if (completedCount === 1) {
-            this.userProgress.unlockBadge('geo_detective');
+            this.userProgress.unlockBadge('first_subtopic');
         }
     }
 
@@ -249,6 +149,109 @@ class GameEngine {
         }
 
         return this.startSession('review', null, null, questions);
+    }
+
+    // ========== LESSON CARDS (Durak 1: Bilgi + Kontrol Sorusu) ==========
+    startLessonSession(lessonCards) {
+        this.currentLesson = {
+            cards: lessonCards,
+            index: 0
+        };
+        return this.currentLesson;
+    }
+
+    getCurrentLessonCard() {
+        if (!this.currentLesson) return null;
+        return this.currentLesson.cards[this.currentLesson.index];
+    }
+
+    getLessonProgress() {
+        if (!this.currentLesson) return { current: 0, total: 0 };
+        return {
+            current: this.currentLesson.index + 1,
+            total: this.currentLesson.cards.length
+        };
+    }
+
+    advanceLessonCard() {
+        this.currentLesson.index++;
+        return this.currentLesson.index < this.currentLesson.cards.length;
+    }
+
+    isLessonComplete() {
+        return !this.currentLesson || this.currentLesson.index >= this.currentLesson.cards.length;
+    }
+
+    // ========== MATCH PAIRS (Durak 3: Eşleştirme) ==========
+    startMatchSession(matchPairs) {
+        const terms = matchPairs.map((p, i) => ({ text: p.term, pairId: i, type: 'term' }));
+        const defs = matchPairs.map((p, i) => ({ text: p.def, pairId: i, type: 'def' }));
+        const cards = Helpers.shuffleArray([...terms, ...defs]);
+
+        this.currentMatch = {
+            cards,
+            totalPairs: matchPairs.length,
+            solved: 0,
+            selected: null
+        };
+        return this.currentMatch;
+    }
+
+    // Bir karta tıklandığında çağrılır; sonucu döner: 'selected' | 'match' | 'mismatch'
+    handleMatchSelection(cardData) {
+        const m = this.currentMatch;
+        if (!m.selected) {
+            m.selected = cardData;
+            return { status: 'selected' };
+        }
+
+        if (m.selected.pairId === cardData.pairId && m.selected.type !== cardData.type) {
+            m.solved++;
+            m.selected = null;
+            const complete = m.solved >= m.totalPairs;
+            return { status: 'match', solved: m.solved, total: m.totalPairs, complete };
+        }
+
+        const prevSelected = m.selected;
+        m.selected = null;
+        return { status: 'mismatch', previous: prevSelected };
+    }
+
+    isMatchComplete() {
+        return this.currentMatch && this.currentMatch.solved >= this.currentMatch.totalPairs;
+    }
+
+    // ========== FLASHCARDS (Durak 5: Bilgi Kartları) ==========
+    startFlashSession(flashcards) {
+        this.currentFlash = {
+            cards: flashcards,
+            index: 0,
+            knewCount: 0
+        };
+        return this.currentFlash;
+    }
+
+    getCurrentFlashcard() {
+        if (!this.currentFlash) return null;
+        return this.currentFlash.cards[this.currentFlash.index];
+    }
+
+    getFlashProgress() {
+        if (!this.currentFlash) return { current: 0, total: 0 };
+        return {
+            current: this.currentFlash.index + 1,
+            total: this.currentFlash.cards.length
+        };
+    }
+
+    advanceFlashcard(knew) {
+        if (knew) this.currentFlash.knewCount++;
+        this.currentFlash.index++;
+        return this.currentFlash.index < this.currentFlash.cards.length;
+    }
+
+    isFlashComplete() {
+        return !this.currentFlash || this.currentFlash.index >= this.currentFlash.cards.length;
     }
 }
 

@@ -11,7 +11,6 @@ class UIRenderer {
         this.geoServices = geoServices;
         this.curriculumData = null;
         this.container = document.getElementById('main-content');
-        this.activePopup = null;
     }
 
     setCurriculumData(data) {
@@ -20,6 +19,7 @@ class UIRenderer {
 
     // ========== SCREEN TRANSITIONS ==========
     render(html, animationClass = 'fade-in') {
+        this.hideResultPanel();
         this.container.innerHTML = html;
         this.container.classList.add(animationClass);
         setTimeout(() => this.container.classList.remove(animationClass), 500);
@@ -185,16 +185,17 @@ class UIRenderer {
 
     // ========== UNIT DETAIL SCREEN (Topics Path) ==========
     renderUnitScreen(unit) {
-        const topicsHtml = unit.topics.map((topic, index) => 
-            this.renderTopicPathItem(topic, index, unit.topics)
-        ).join('');
+        const topicsHtml = unit.topics.map((topic, index) => {
+            const connector = index > 0 ? '<div class="box-connector"></div>' : '';
+            return connector + this.renderTopicPathItem(topic, index, unit.topics);
+        }).join('');
 
         const html = `
             ${this.renderHeader()}
             <div class="roadmap">
                 <button class="btn btn--secondary" id="back-btn">← Geri</button>
                 <div class="roadmap__title">${unit.unitName}</div>
-                <div class="topics-container">
+                <div class="box-list">
                     ${topicsHtml}
                 </div>
             </div>
@@ -209,29 +210,17 @@ class UIRenderer {
         const isCompleted = this.userProgress.isTopicCompleted(topic.topicId);
         const isUnlocked = index === 0 || this.userProgress.isTopicCompleted(allTopics[index - 1].topicId);
         const isLocked = !isUnlocked && !isCompleted;
-        const isActive = isUnlocked && !isCompleted;
-
-        let statusClass = 'locked';
-        let icon = '🔒';
-
-        if (isCompleted) {
-            statusClass = 'completed';
-            icon = '✓';
-        } else if (isActive) {
-            statusClass = 'active';
-            icon = '▶';
-        }
-
-        const completedSubtopics = topic.subtopics.filter(s => 
+        const colorClass = 'topic-c' + (index % 6);
+        const completedSubtopics = topic.subtopics.filter(s =>
             this.userProgress.isSubtopicCompleted(s.subtopicId)
         ).length;
 
         return `
-            <div class="topic-item ${statusClass}" ${!isLocked ? `data-topic-id="${topic.topicId}"` : ''}>
-                <div class="topic-item__marker">${icon}</div>
-                <div class="topic-item__content">
-                    <div class="topic-item__name">${topic.topicName}</div>
-                    <div class="topic-item__meta">${completedSubtopics}/${topic.subtopics.length} alt konu</div>
+            <div class="box-node ${colorClass} ${isLocked ? 'locked' : (isCompleted ? 'done' : '')}" ${!isLocked ? `data-topic-id="${topic.topicId}"` : ''}>
+                <div class="box-num">${isLocked ? '🔒' : (isCompleted ? '' : (index + 1))}</div>
+                <div>
+                    <div class="box-label">${topic.topicName}</div>
+                    <div class="box-sub">${completedSubtopics}/${topic.subtopics.length} alt konu</div>
                 </div>
             </div>
         `;
@@ -253,16 +242,18 @@ class UIRenderer {
 
     // ========== TOPIC DETAIL SCREEN (Subtopics Path) ==========
     renderTopicScreen(unit, topic) {
-        const subtopicsHtml = topic.subtopics.map((subtopic, index) => 
-            this.renderSubtopicPathItem(subtopic, index, topic.subtopics)
-        ).join('');
+        const colorClass = 'topic-c' + (unit.topics.indexOf(topic) % 6);
+        const subtopicsHtml = topic.subtopics.map((subtopic, index) => {
+            const connector = index > 0 ? '<div class="box-connector"></div>' : '';
+            return connector + this.renderSubtopicPathItem(subtopic, index, topic.subtopics, colorClass);
+        }).join('');
 
         const html = `
             ${this.renderHeader()}
             <div class="roadmap">
                 <button class="btn btn--secondary" id="back-btn">← Geri</button>
                 <div class="roadmap__title">${topic.topicName}</div>
-                <div class="topics-container">
+                <div class="box-list">
                     ${subtopicsHtml}
                 </div>
             </div>
@@ -273,28 +264,19 @@ class UIRenderer {
         this.attachTopicListeners(unit, topic);
     }
 
-    renderSubtopicPathItem(subtopic, index, allSubtopics) {
+    renderSubtopicPathItem(subtopic, index, allSubtopics, colorClass) {
         const isCompleted = this.userProgress.isSubtopicCompleted(subtopic.subtopicId);
         const isUnlocked = index === 0 || this.userProgress.isSubtopicCompleted(allSubtopics[index - 1].subtopicId);
         const isLocked = !isUnlocked && !isCompleted;
-        const isActive = isUnlocked && !isCompleted;
-
-        let statusClass = 'locked';
-        let icon = '🔒';
-
-        if (isCompleted) {
-            statusClass = 'completed';
-            icon = '✓';
-        } else if (isActive) {
-            statusClass = 'active';
-            icon = '▶';
-        }
+        const partsCount = this.userProgress.getCompletedPartsCount(subtopic.subtopicId);
+        const subLabel = isCompleted ? 'Tamamlandı' : `${partsCount}/${CONFIG.LEARNING_PARTS.length} durak tamamlandı`;
 
         return `
-            <div class="topic-item ${statusClass}" ${!isLocked ? `data-subtopic-id="${subtopic.subtopicId}"` : ''}>
-                <div class="topic-item__marker">${icon}</div>
-                <div class="topic-item__content">
-                    <div class="topic-item__name">${subtopic.subtopicName}</div>
+            <div class="box-node ${colorClass} ${isLocked ? 'locked' : (isCompleted ? 'done' : '')}" ${!isLocked ? `data-subtopic-id="${subtopic.subtopicId}"` : ''}>
+                <div class="box-num">${isLocked ? '🔒' : (isCompleted ? '' : (index + 1))}</div>
+                <div>
+                    <div class="box-label">${subtopic.subtopicName}</div>
+                    <div class="box-sub">${subLabel}</div>
                 </div>
             </div>
         `;
@@ -339,267 +321,281 @@ class UIRenderer {
         this.render(html);
     }
 
-    // ========== INFO CARD SCREEN (Bilgi Kartı) ==========
-    renderInfoCard(content, unit, topic, subtopic) {
-        const interactiveText = Helpers.renderInteractiveText(
-            content.mainText, 
-            content.interactiveWords, 
-            content.geoReferences
-        );
+    // ========== PARÇA PATİKASI (5 Öğrenme Modu Durağı) ==========
+    renderPartPath(content, unit, topic, subtopic) {
+        const parts = CONFIG.LEARNING_PARTS;
+        const positions = ['align-start', 'align-end', 'align-start', 'align-end', 'align-start'];
 
-        const hasGeo = content.geoReferences && content.geoReferences.length > 0;
+        let bodyHtml = '';
+        parts.forEach((p, i) => {
+            const isDone = this.userProgress.isPartCompleted(subtopic.subtopicId, p.key);
+            const isLocked = i > 0 && !this.userProgress.isPartCompleted(subtopic.subtopicId, parts[i - 1].key);
+
+            if (i > 0) {
+                const goingRight = (i % 2 === 1);
+                bodyHtml += this.renderPartConnector(goingRight);
+            }
+
+            const sealClass = isLocked ? 'locked' : (isDone ? 'done' : 'unlocked');
+            const sealContent = isLocked ? '🔒' : (isDone ? '★' : p.icon);
+            const subText = isLocked ? 'Önceki durağı tamamla' : (isDone ? 'Tamamlandı' : 'Hazır');
+
+            bodyHtml += `
+                <div class="part-row ${positions[i]}">
+                    <button class="part-seal ${sealClass}" ${!isLocked ? `data-part-index="${i}"` : ''}>${sealContent}</button>
+                    <div class="part-row__info">
+                        <div class="part-row__title">${p.label}</div>
+                        <div class="part-row__sub">${subText}</div>
+                    </div>
+                </div>
+            `;
+        });
 
         const html = `
             ${this.renderHeader()}
-            <div class="info-card">
-                <button class="btn btn--secondary" id="back-btn" style="margin-bottom: 16px;">← Geri</button>
-                <div class="info-card__title">${subtopic.subtopicName}</div>
-                <div class="info-card__text">${interactiveText}</div>
-                
-                <div class="info-card__geo-bridge">
-                    🔗 <strong>Coğrafya Köprüsü:</strong><br>
-                    ${Helpers.renderInteractiveText(content.geoInfo, [], content.geoReferences)}
+            <div class="part-path">
+                <button class="btn btn--secondary" id="back-btn">← Geri</button>
+                <div class="part-path__intro">
+                    <h2>${subtopic.subtopicName}</h2>
+                    <p>5 durağı sırayla tamamla, konuyu ustalaş</p>
                 </div>
-
-                ${hasGeo ? `
-                    <button class="btn btn--secondary btn--large btn--icon" id="show-map-btn">
-                        <span>📍</span> Haritada Gör
-                    </button>
-                ` : ''}
-
-                <button class="btn btn--primary btn--large btn--icon" id="start-test-btn">
-                    <span>✅</span> Anladım, Teste Başla!
-                </button>
+                ${bodyHtml}
             </div>
+            ${this.renderBottomNav('learn')}
         `;
 
         this.render(html);
-        this.attachInfoCardListeners(content, unit, topic, subtopic);
+        this.attachPartPathListeners(content, unit, topic, subtopic);
     }
 
-    attachInfoCardListeners(content, unit, topic, subtopic) {
+    renderPartConnector(goingRight) {
+        const d = goingRight
+            ? 'M 32 0 C 32 22, 332 22, 332 44'
+            : 'M 332 0 C 332 22, 32 22, 32 44';
+        return `<svg class="part-connector" viewBox="0 0 364 44" preserveAspectRatio="none">
+            <path d="${d}" stroke="var(--line)" stroke-width="3" fill="none" stroke-linecap="round"/>
+        </svg>`;
+    }
+
+    attachPartPathListeners(content, unit, topic, subtopic) {
         Helpers.qs('#back-btn').addEventListener('click', () => {
             window.appInstance.navigateToTopic(unit.unitId, topic.topicId);
         });
 
-        Helpers.qs('#start-test-btn').addEventListener('click', () => {
-            window.appInstance.startQuestionSession(content, unit, topic, subtopic);
-        });
-
-        const mapBtn = Helpers.qs('#show-map-btn');
-        if (mapBtn) {
-            mapBtn.addEventListener('click', () => {
-                this.showMapOverlay(content.geoReferences);
-            });
-        }
-
-        Helpers.qsa('.interactive-word').forEach(el => {
-            el.addEventListener('click', (e) => {
-                this.showWordPopup(e.target, content.mainText);
-            });
-        });
-
-        Helpers.qsa('.geo-reference').forEach(el => {
-            el.addEventListener('click', (e) => {
-                const lat = parseFloat(el.dataset.lat);
-                const lng = parseFloat(el.dataset.lng);
-                const place = el.dataset.place;
-                
-                if (lat && lng) {
-                    this.showMapOverlay(content.geoReferences, { lat, lng, place });
-                }
+        Helpers.qsa('[data-part-index]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const partIndex = parseInt(btn.dataset.partIndex);
+                window.appInstance.startPart(partIndex, content, unit, topic, subtopic);
             });
         });
 
         this.attachNavListeners();
     }
 
-    // ========== WORD POPUP (Kelime Açıklaması) ==========
-    async showWordPopup(element, context) {
-        this.closeActivePopup();
-
-        const word = element.dataset.word;
-        const rect = element.getBoundingClientRect();
-
-        const popup = Helpers.createElement('div', {
-            className: 'popup',
-            style: `position: fixed; top: ${rect.bottom + 8}px; left: ${Math.min(rect.left, window.innerWidth - 320)}px;`
+    // ========== ORTAK SORU-CEVAP MOTORU ==========
+    // optExplain varsa: her şıkkın altına kendi açıklaması açılır, alttan "İlerle" eklenir (lokma kontrol + hızlı test)
+    // optExplain yoksa: alttan kayan sonuç paneli ile tek açıklama gösterilir (KPSS testi)
+    renderQuestion(cfg) {
+        const body = Helpers.qs('#' + cfg.bodyId);
+        const letters = ['A', 'B', 'C', 'D', 'E'];
+        let optsHtml = '';
+        cfg.opts.forEach((opt, i) => {
+            optsHtml += `<div class="q-option-wrap">
+                <button class="q-option" data-idx="${i}"><span class="letter">${letters[i]}</span><span>${opt}</span></button>
+                <div class="opt-explain" id="optExplain-${i}"></div>
+            </div>`;
         });
 
-        popup.innerHTML = `
-            <div class="popup__word">${word}</div>
-            <div class="popup__text"><span class="spinner" style="width: 16px; height: 16px; display: inline-block; vertical-align: middle;"></span> Yükleniyor...</div>
-        `;
+        body.innerHTML = `<div class="q-kicker">${cfg.kicker}</div><div class="q-text">${cfg.q}</div><div class="q-options" id="qOptionsContainer">${optsHtml}</div>`;
 
-        document.body.appendChild(popup);
-        this.activePopup = popup;
+        const optionEls = body.querySelectorAll('.q-option');
+        optionEls.forEach(el => {
+            el.addEventListener('click', () => {
+                if (el.classList.contains('disabled')) return;
+                optionEls.forEach(o => o.classList.add('disabled'));
+                const idx = parseInt(el.dataset.idx);
+                const isCorrect = idx === cfg.correct;
+                el.classList.add(isCorrect ? 'correct' : 'incorrect');
+                if (!isCorrect) optionEls[cfg.correct].classList.add('correct');
 
-        const closeHandler = (e) => {
-            if (!popup.contains(e.target) && e.target !== element) {
-                this.closeActivePopup();
-                document.removeEventListener('click', closeHandler);
-            }
-        };
-        setTimeout(() => document.addEventListener('click', closeHandler), 100);
-
-        try {
-            const explanation = await this.contentPool.getWordExplanation(word, context);
-            popup.querySelector('.popup__text').textContent = explanation;
-        } catch (error) {
-            popup.querySelector('.popup__text').textContent = 'Açıklama yüklenemedi.';
-        }
+                if (cfg.optExplain) {
+                    cfg.optExplain.forEach((txt, i) => {
+                        const box = body.querySelector('#optExplain-' + i);
+                        const isThisCorrect = i === cfg.correct;
+                        box.innerHTML = `<span class="opt-explain-icon">${isThisCorrect ? '✓' : '✕'}</span>${txt}`;
+                        box.classList.add('show', isThisCorrect ? 'ok' : 'no');
+                    });
+                    this.showInlineContinue(cfg.bodyId, () => cfg.onContinue(isCorrect));
+                } else {
+                    optionEls.forEach(o => { if (o !== el && parseInt(o.dataset.idx) !== cfg.correct) o.classList.add('dimmed'); });
+                    this.showResultPanel(isCorrect, cfg.explain, () => { this.hideResultPanel(); cfg.onContinue(isCorrect); });
+                }
+            });
+        });
     }
 
-    closeActivePopup() {
-        if (this.activePopup) {
-            this.activePopup.remove();
-            this.activePopup = null;
-        }
+    showInlineContinue(bodyId, onContinue) {
+        const body = Helpers.qs('#' + bodyId);
+        const old = body.querySelector('.inline-continue-wrap');
+        if (old) old.remove();
+        const wrap = Helpers.createElement('div', { className: 'inline-continue-wrap' });
+        wrap.innerHTML = `<button class="btn btn--primary btn--large">İlerle</button>`;
+        wrap.querySelector('button').addEventListener('click', onContinue);
+        body.appendChild(wrap);
+        wrap.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
 
-    // ========== MAP OVERLAY ==========
-    showMapOverlay(geoReferences, focusLocation = null) {
-        const overlay = Helpers.createElement('div', { className: 'modal-overlay' });
-        
-        overlay.innerHTML = `
-            <div class="modal" style="width: 90vw; max-width: 600px;">
-                <div class="modal__header">
-                    <div class="modal__title">🗺️ Coğrafi Konum</div>
-                    <button class="modal__close" id="close-map-modal">✕</button>
-                </div>
-                <div class="modal__content">
-                    <div id="map" class="map-container" style="margin: 0;"></div>
-                </div>
+    showResultPanel(isCorrect, explainText, onContinue) {
+        let panel = Helpers.qs('#resultPanel');
+        if (!panel) {
+            panel = Helpers.createElement('div', { id: 'resultPanel', className: 'result-panel' });
+            document.body.appendChild(panel);
+        }
+        panel.innerHTML = `
+            <div class="result-head">
+                <div class="result-icon">${isCorrect ? '✓' : '✕'}</div>
+                <div class="result-title">${isCorrect ? 'Doğru!' : 'Yanlış'}</div>
             </div>
+            ${explainText ? `<div class="result-explain">${explainText}</div>` : ''}
+            <button class="btn btn--primary btn--large" id="resultContinueBtn">İlerle</button>
         `;
+        panel.className = 'result-panel show ' + (isCorrect ? 'correct' : 'incorrect');
+        Helpers.qs('#resultContinueBtn', panel).addEventListener('click', onContinue);
+    }
 
-        document.body.appendChild(overlay);
+    hideResultPanel() {
+        const panel = Helpers.qs('#resultPanel');
+        if (panel) panel.remove();
+    }
 
-        setTimeout(() => {
-            this.geoServices.initMap('map');
-            
-            const validLocations = geoReferences.filter(g => g.coords && g.coords[0] && g.coords[1]);
-            
-            if (validLocations.length > 0) {
-                this.geoServices.addMultiplePins(validLocations);
-            }
+    // ========== DURAK 1: LOKMA BİLGİ KARTI ==========
+    renderLessonCard(card, progress) {
+        const html = `
+            ${this.renderHeader()}
+            <div class="lesson-card">
+                <button class="btn btn--secondary" id="back-btn" style="margin-bottom: 1rem;">✕</button>
+                <div class="lesson-card__eyebrow">${card.eyebrow || ''}</div>
+                <div class="lesson-card__title">💡 ${card.title}</div>
+                <p class="lesson-card__text">${card.text}</p>
+                <div class="tip-box"><b>📌 KPSS İpucu:</b> ${card.tip}</div>
+                <button class="btn btn--primary btn--large" id="lesson-continue-btn" style="margin-top: 1.4rem;">İlerle</button>
+            </div>
+            ${this.renderBottomNav('learn')}
+        `;
+        this.render(html);
+        Helpers.qs('#back-btn').addEventListener('click', () => window.appInstance.exitPart());
+        Helpers.qs('#lesson-continue-btn').addEventListener('click', () => window.appInstance.goToLessonQuiz());
+    }
 
-            if (focusLocation) {
-                this.geoServices.panTo(focusLocation.lat, focusLocation.lng, 8);
-            }
-        }, 100);
-
-        Helpers.qs('#close-map-modal', overlay).addEventListener('click', () => {
-            this.geoServices.destroyMap();
-            overlay.remove();
-        });
-
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) {
-                this.geoServices.destroyMap();
-                overlay.remove();
-            }
+    renderLessonQuiz(card, onContinue) {
+        const html = `
+            ${this.renderHeader()}
+            <div class="q-screen" id="lessonQuizBody"></div>
+            ${this.renderBottomNav('learn')}
+        `;
+        this.render(html);
+        this.renderQuestion({
+            bodyId: 'lessonQuizBody',
+            kicker: 'Hızlı Kontrol',
+            q: card.quiz.q,
+            opts: card.quiz.opts,
+            correct: card.quiz.correct,
+            optExplain: card.quiz.optExplain,
+            onContinue
         });
     }
 
-    // ========== QUESTION SCREEN ==========
-    renderQuestionScreen(question, progress) {
-        const optionsHtml = question.options.map((opt, i) => `
-            <label class="option" data-option-index="${i}">
-                <input type="radio" name="answer" value="${i}">
-                <span>${String.fromCharCode(65 + i)}) ${opt.text}</span>
-            </label>
+    // ========== DURAK 2/4: HIZLI TEST & KPSS TESTİ ==========
+    renderTestQuestion(question, progress, useOptExplain, onContinue) {
+        const html = `
+            ${this.renderHeader()}
+            <div class="q-screen" id="testBody"></div>
+            ${this.renderBottomNav('learn')}
+        `;
+        this.render(html);
+        this.renderQuestion({
+            bodyId: 'testBody',
+            kicker: `Soru ${progress.current} / ${progress.total}`,
+            q: question.q,
+            opts: question.opts,
+            correct: question.correct,
+            explain: question.explain,
+            optExplain: useOptExplain ? question.optExplain : null,
+            onContinue
+        });
+    }
+
+    // ========== DURAK 3: EŞLEŞTİRME ==========
+    renderMatchScreen(matchSession) {
+        const cardsHtml = matchSession.cards.map((c, idx) => `
+            <div class="match-card" data-idx="${idx}" data-pair-id="${c.pairId}" data-type="${c.type}">${c.text}</div>
         `).join('');
 
         const html = `
             ${this.renderHeader()}
-            <div class="question-container">
-                <div class="question-header">
-                    <div class="question-progress">Soru ${progress.current}/${progress.total}</div>
-                    <div class="question-xp">⭐ +${CONFIG.XP_PER_QUESTION} XP</div>
-                </div>
-                <div class="question-text">${question.q}</div>
-                <div class="options">${optionsHtml}</div>
-                <button class="btn btn--primary btn--large" id="submit-answer-btn" disabled>Seç</button>
+            <div class="match-screen">
+                <button class="btn btn--secondary" id="back-btn">✕</button>
+                <div class="q-kicker" style="margin-top: 1rem;">Eşleştirme Oyunu</div>
+                <div class="q-text">Kavramları doğru tanımlarla eşleştir</div>
+                <div class="match-grid" id="matchGrid">${cardsHtml}</div>
             </div>
+            ${this.renderBottomNav('learn')}
         `;
-
         this.render(html);
-        this.attachQuestionListeners();
+        Helpers.qs('#back-btn').addEventListener('click', () => window.appInstance.exitPart());
+        this.attachMatchListeners(matchSession);
     }
 
-    attachQuestionListeners() {
-        let selectedIndex = null;
-
-        Helpers.qsa('.option').forEach(option => {
-            option.addEventListener('click', () => {
-                Helpers.qsa('.option').forEach(o => o.classList.remove('selected'));
-                option.classList.add('selected');
-                option.querySelector('input').checked = true;
-                selectedIndex = parseInt(option.dataset.optionIndex);
-                Helpers.qs('#submit-answer-btn').disabled = false;
+    attachMatchListeners(matchSession) {
+        const cardEls = Helpers.qsa('.match-card');
+        cardEls.forEach(el => {
+            el.addEventListener('click', () => {
+                if (el.classList.contains('matched')) return;
+                const cardData = {
+                    pairId: parseInt(el.dataset.pairId),
+                    type: el.dataset.type
+                };
+                window.appInstance.handleMatchClick(el, cardData);
             });
         });
-
-        Helpers.qs('#submit-answer-btn').addEventListener('click', () => {
-            if (selectedIndex !== null) {
-                window.appInstance.submitAnswer(selectedIndex);
-            }
-        });
     }
 
-    // ========== FEEDBACK SCREENS ==========
-    renderFeedback(result) {
-        let feedbackHtml = '';
-
-        if (result.status === 'correct') {
-            feedbackHtml = `
-                <div class="feedback feedback--success scale-in">
-                    <div class="feedback__title">✅ Harika! +${result.xpGained} XP</div>
-                    <div class="feedback__text">${result.explanation}</div>
-                </div>
-            `;
-        } else if (result.status === 'wrong_requeue') {
-            feedbackHtml = `
-                <div class="feedback feedback--error scale-in">
-                    <div class="feedback__title">❌ Maalesef, yanlış!</div>
-                    <div class="feedback__text">Bu soru listenin sonuna eklendi. Daha sonra tekrar sorulacak.</div>
-                </div>
-            `;
-        } else if (result.status === 'final_wrong') {
-            feedbackHtml = `
-                <div class="feedback feedback--info scale-in">
-                    <div class="feedback__title">📖 Doğru Cevap: ${result.correctAnswer.text}</div>
-                    <div class="feedback__text">${result.explanation}</div>
-                </div>
-            `;
-        }
-
-        const continueBtn = `
-            <button class="btn btn--primary btn--large" id="continue-question-btn">
-                ${this.gameEngine.isSessionComplete() ? 'Sonuçları Gör' : 'Devam Et'}
-            </button>
-        `;
-
+    // ========== DURAK 5: BİLGİ KARTLARI (FLASHCARD) ==========
+    renderFlashcard(card, progress) {
         const html = `
             ${this.renderHeader()}
-            <div class="question-container">
-                ${feedbackHtml}
-                ${continueBtn}
+            <div class="flip-wrap">
+                <button class="btn btn--secondary" id="back-btn" style="align-self: flex-start; margin-bottom: 1rem;">✕</button>
+                <div class="flip-hint">Kartı çevirmek için dokun</div>
+                <div class="flip-card" id="flipCard">
+                    <div class="flip-inner" id="flipInner">
+                        <div class="flip-face flip-front"><div class="flip-label">KAVRAM</div><div class="flip-content">${card.front}</div></div>
+                        <div class="flip-face flip-back"><div class="flip-label">AÇIKLAMA</div><div class="flip-content">${card.back}</div></div>
+                    </div>
+                </div>
+                <div class="flip-actions" id="flipActions" style="visibility: hidden;">
+                    <button class="repeat" id="flip-repeat-btn">🔁 Tekrar Et</button>
+                    <button class="know" id="flip-know-btn">✓ Biliyorum</button>
+                </div>
             </div>
+            ${this.renderBottomNav('learn')}
         `;
-
         this.render(html);
 
-        Helpers.qs('#continue-question-btn').addEventListener('click', () => {
-            window.appInstance.continueAfterFeedback();
+        Helpers.qs('#back-btn').addEventListener('click', () => window.appInstance.exitPart());
+        Helpers.qs('#flipCard').addEventListener('click', () => {
+            Helpers.qs('#flipInner').classList.add('flipped');
+            Helpers.qs('#flipActions').style.visibility = 'visible';
         });
+        Helpers.qs('#flip-repeat-btn').addEventListener('click', () => window.appInstance.flashAnswer(false));
+        Helpers.qs('#flip-know-btn').addEventListener('click', () => window.appInstance.flashAnswer(true));
     }
 
-    // ========== COMPLETION SCREEN ==========
+    // ========== ALT BAŞLIK TAMAMLANDI EKRANI ==========
     renderCompletionScreen(summary, unit, topic, subtopic) {
+        const xpEarned = CONFIG.XP_PER_COMPLETED_SUBTOPIC + (CONFIG.LEARNING_PARTS.length * CONFIG.XP_PER_COMPLETED_PART);
         const badgeHtml = summary.perfectScore ? `
-            <div class="badge badge-unlock" style="margin: 20px auto;">
+            <div class="badge" style="margin: 0 auto 1.2rem;">
                 <div class="badge__icon">🏆</div>
                 <div class="badge__name">${subtopic.subtopicName} Uzmanı</div>
             </div>
@@ -607,30 +603,30 @@ class UIRenderer {
 
         const html = `
             ${this.renderHeader()}
-            <div class="card text-center">
-                <div style="font-size: 64px; margin-bottom: 16px;" class="bounce">🎉</div>
-                <div style="font-size: 24px; font-weight: 700; margin-bottom: 8px;">BRAVOOOoo!</div>
-                
+            <div class="completion-wrap">
+                <div class="completion-emoji bounce">🎉</div>
+                <h2>Tebrikler!</h2>
+                <p>${subtopic.subtopicName} tamamlandı</p>
+
                 ${badgeHtml}
 
-                <div style="font-size: 18px; color: var(--warning); font-weight: 600; margin: 16px 0;">
-                    +${summary.correctCount * CONFIG.XP_PER_QUESTION + CONFIG.XP_PER_COMPLETED_SUBTOPIC} XP
-                </div>
+                <div style="font-size: 1.1rem; color: var(--accent); font-weight: 700; margin-bottom: 1.2rem;">+${xpEarned} XP</div>
 
-                <div style="display: flex; justify-content: space-around; margin: 20px 0;">
-                    <div>
-                        <div style="font-size: 24px; font-weight: 700; color: var(--success);">${summary.accuracy}%</div>
-                        <div class="text-dim" style="font-size: 12px;">Doğruluk</div>
+                <div class="completion-stats">
+                    <div class="stat-pill">
+                        <div class="num">${summary.accuracy}%</div>
+                        <div class="lbl">Doğruluk</div>
                     </div>
-                    <div>
-                        <div style="font-size: 24px; font-weight: 700; color: var(--accent);">${summary.correctCount}/${summary.totalQuestions}</div>
-                        <div class="text-dim" style="font-size: 12px;">Doğru</div>
+                    <div class="stat-pill">
+                        <div class="num">${summary.correctCount}/${summary.totalQuestions}</div>
+                        <div class="lbl">Doğru</div>
                     </div>
                 </div>
 
                 <button class="btn btn--secondary btn--large" id="back-to-topic-btn">← Konu Seç</button>
                 <button class="btn btn--primary btn--large" id="next-subtopic-btn">Sonraki Konu →</button>
             </div>
+            ${this.renderBottomNav('learn')}
         `;
 
         this.render(html);
@@ -645,6 +641,8 @@ class UIRenderer {
         Helpers.qs('#next-subtopic-btn').addEventListener('click', () => {
             window.appInstance.navigateToNextSubtopic(unit.unitId, topic.topicId, subtopic.subtopicId);
         });
+
+        this.attachNavListeners();
     }
 
     // ========== LEADERBOARD SCREEN ==========
@@ -773,18 +771,33 @@ class UIRenderer {
     showToast(message, type = 'info') {
         const toast = Helpers.createElement('div', {
             className: `toast feedback feedback--${type}`,
-            style: 'position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); z-index: 2000; min-width: 250px;'
+            style: 'position: fixed; top: 72px; left: 50%; transform: translateX(-50%); z-index: 2000; min-width: 250px; max-width: 90vw; pointer-events: none; box-shadow: 0 6px 20px rgba(0,0,0,0.4);'
         });
         toast.textContent = message;
         document.body.appendChild(toast);
 
-        setTimeout(() => toast.remove(), 3500);
+        setTimeout(() => toast.remove(), 3000);
     }
 
     // ========== BADGE UNLOCK MODAL ==========
     showBadgeUnlockModal(badge) {
+        // Aynı anda birden fazla rozet açılırsa (ör. art arda iki tetikleyici),
+        // üst üste binen overlay yerine sıraya alıp birini kapatınca diğerini göster.
+        if (!this.badgeQueue) this.badgeQueue = [];
+
+        const alreadyShowing = !!Helpers.qs('.modal-overlay');
+        this.badgeQueue.push(badge);
+
+        if (alreadyShowing) return; // sıraya eklendi, mevcut modal kapanınca gösterilecek
+
+        this.displayNextBadgeModal();
+    }
+
+    displayNextBadgeModal() {
+        if (!this.badgeQueue || this.badgeQueue.length === 0) return;
+        const badge = this.badgeQueue.shift();
+
         const overlay = Helpers.createElement('div', { className: 'modal-overlay' });
-        
         overlay.innerHTML = `
             <div class="modal text-center">
                 <div class="badge badge-unlock" style="margin: 0 auto 16px;">
@@ -801,6 +814,7 @@ class UIRenderer {
 
         Helpers.qs('#close-badge-modal', overlay).addEventListener('click', () => {
             overlay.remove();
+            this.displayNextBadgeModal();
         });
     }
 }

@@ -22,6 +22,7 @@ class UserProgress {
             badges: [],
             completedSubtopics: [],
             completedTopics: [],
+            completedParts: [], // 'subtopicId-partKey' formatında, ör: 'sub_1_1_1-lesson'
             currentUnitId: null,
             currentTopicId: null,
             currentSubtopicId: null,
@@ -181,6 +182,30 @@ class UserProgress {
     getAccuracy() {
         if (this.data.totalQuestionsAnswered === 0) return 0;
         return Math.round((this.data.totalCorrectAnswers / this.data.totalQuestionsAnswered) * 100);
+    }
+
+    // ========== PART PROGRESS (5 Öğrenme Modu) ==========
+    partKey(subtopicId, partKey) {
+        return subtopicId + '-' + partKey;
+    }
+
+    isPartCompleted(subtopicId, partKey) {
+        return this.data.completedParts.includes(this.partKey(subtopicId, partKey));
+    }
+
+    completePart(subtopicId, partKey) {
+        const key = this.partKey(subtopicId, partKey);
+        if (this.data.completedParts.includes(key)) {
+            return; // zaten tamamlanmış, tekrar XP verme
+        }
+        this.data.completedParts.push(key);
+        this.addXP(CONFIG.XP_PER_COMPLETED_PART);
+        this.save();
+    }
+
+    getCompletedPartsCount(subtopicId) {
+        const prefix = subtopicId + '-';
+        return this.data.completedParts.filter(k => k.startsWith(prefix)).length;
     }
 
     // ========== SUBTOPIC PROGRESS ==========
