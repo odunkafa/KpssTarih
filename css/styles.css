@@ -1,6 +1,8 @@
 /* ==========================================
-   STYLES.CSS - Main Stylesheet
-   Duolingo-esque, Mobile-first Design
+   STYLES.CSS - Ana Stil Dosyası
+   "Mühür ve Sicil" — KPSS Akademi Kimliği
+   Sıcak lacivert/pirinç paleti, ferman/arşiv hissi,
+   Duolingo'nun lokma-lokma ilerleyiş mantığıyla harmanlanmış.
    ========================================== */
 
 * {
@@ -10,29 +12,59 @@
 }
 
 :root {
-    /* Colors */
-    --primary: #1a1a2e;
-    --secondary: #16213e;
-    --accent: #00d4ff;
-    --accent-bright: #00ff41;
-    --warning: #ffaa00;
-    --danger: #ff006e;
-    --success: #00ff41;
-    --background: #0f3460;
-    --card-bg: #16213e;
-    --text: #ffffff;
-    --text-dim: #b0b0b0;
-    
+    /* ---- Zemin & Panel ---- */
+    --primary: #13151f;        /* Gece laciverti - ana zemin */
+    --secondary: #1c2030;      /* Panel/kart zemini */
+    --secondary-light: #262b40; /* Hafif daha açık panel */
+    --line: #323850;           /* Kenarlık/ayraç çizgisi */
+
+    /* ---- Aksan Renkleri ---- */
+    --accent: #c9a14a;         /* Eski pirinç/altın - birincil aksan, ilerleme */
+    --accent-dark: #9c7a32;    /* Pirinç gölge tonu (3D buton efekti) */
+    --accent-soft: rgba(201, 161, 74, 0.16);
+
+    --success: #3e7c5a;        /* Zeytin yeşili - doğru/başarı */
+    --success-dark: #2c5c41;
+    --success-soft: rgba(62, 124, 90, 0.18);
+
+    --danger: #b3492e;         /* Kiremit kırmızısı - yanlış/uyarı */
+    --danger-dark: #8a3621;
+    --danger-soft: rgba(179, 73, 46, 0.18);
+
+    --info: #5a7a9e;           /* Soluk mavi - bilgi/ikincil aksan */
+    --info-dark: #41607e;
+    --info-soft: rgba(90, 122, 158, 0.16);
+
+    --warning: var(--accent);
+    --background: var(--primary);
+    --card-bg: var(--secondary);
+
+    /* ---- Metin ---- */
+    --text: #ece6da;           /* Sıcak beyaz (parşömen tonu) */
+    --text-dim: #8b8fa3;
+
+    /* Konu rengi paleti (sırayla atanır) */
+    --tc-0: #5a7a9e;
+    --tc-1: #c9a14a;
+    --tc-2: #8a6fa8;
+    --tc-3: #3e7c5a;
+    --tc-4: #b3492e;
+    --tc-5: #4f9aa8;
+
     /* Spacing */
     --spacing-xs: 4px;
     --spacing-sm: 8px;
     --spacing-md: 16px;
     --spacing-lg: 24px;
     --spacing-xl: 32px;
-    
+
     /* Transitions */
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-fast: all 0.15s ease-in-out;
+
+    /* Tipografi */
+    --font-display: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+    --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
 }
 
 /* ========== BODY ========== */
@@ -42,8 +74,10 @@ html, body {
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--background) 100%);
+    font-family: var(--font-body);
+    background:
+        radial-gradient(ellipse at top, rgba(201,161,74,0.05) 0%, transparent 55%),
+        var(--primary);
     color: var(--text);
     overflow: hidden;
     font-size: 16px;
@@ -88,8 +122,8 @@ body {
 }
 
 .spinner {
-    width: 60px;
-    height: 60px;
+    width: 52px;
+    height: 52px;
     border: 4px solid var(--card-bg);
     border-top: 4px solid var(--accent);
     border-radius: 50%;
@@ -103,15 +137,16 @@ body {
 
 .loading-screen p {
     color: var(--accent);
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 600;
+    font-family: var(--font-display);
 }
 
 /* ========== HEADER ========== */
 .header {
     background: var(--secondary);
     padding: var(--spacing-md);
-    border-bottom: 2px solid var(--accent);
+    border-bottom: 1px solid var(--line);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -121,9 +156,11 @@ body {
 }
 
 .header__title {
-    font-size: 20px;
+    font-size: 19px;
     font-weight: 700;
     color: var(--accent);
+    font-family: var(--font-display);
+    letter-spacing: 0.3px;
 }
 
 .header__stats {
@@ -143,31 +180,29 @@ body {
 }
 
 .stat__value {
-    font-weight: 600;
-    color: var(--warning);
+    font-weight: 700;
+    color: var(--accent);
 }
 
 /* ========== CARDS ========== */
 .card {
     background: var(--card-bg);
-    border-radius: 12px;
+    border-radius: 14px;
     padding: var(--spacing-lg);
     margin: var(--spacing-md);
-    border: 1px solid rgba(0, 212, 255, 0.2);
+    border: 1px solid var(--line);
     transition: var(--transition);
     cursor: pointer;
 }
 
 .card:hover:not(.card--locked) {
     border-color: var(--accent);
-    box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
-    transform: translateY(-4px);
+    transform: translateY(-2px);
 }
 
 .card--locked {
-    opacity: 0.6;
+    opacity: 0.55;
     cursor: not-allowed;
-    filter: grayscale(50%);
 }
 
 .card--completed {
@@ -176,7 +211,7 @@ body {
 
 .card--active {
     border-color: var(--accent);
-    background: rgba(0, 212, 255, 0.1);
+    background: var(--accent-soft);
 }
 
 /* ========== ROADMAP / TOPIC PATH ========== */
@@ -185,10 +220,11 @@ body {
 }
 
 .roadmap__title {
-    font-size: 18px;
+    font-size: 19px;
     font-weight: 700;
     margin-bottom: var(--spacing-lg);
     color: var(--accent);
+    font-family: var(--font-display);
 }
 
 .topics-container {
@@ -206,7 +242,7 @@ body {
     top: 20px;
     bottom: 20px;
     width: 2px;
-    background: linear-gradient(180deg, var(--accent) 0%, var(--secondary) 100%);
+    background: var(--line);
     z-index: 0;
 }
 
@@ -223,29 +259,32 @@ body {
     height: 48px;
     border-radius: 50%;
     background: var(--secondary);
-    border: 3px solid var(--secondary);
+    border: 3px solid var(--line);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 22px;
     flex-shrink: 0;
     transition: var(--transition-fast);
+    box-shadow: 0 3px 0 rgba(0,0,0,0.25);
 }
 
 .topic-item.completed .topic-item__marker {
     background: var(--success);
-    border-color: var(--accent);
+    border-color: var(--success-dark);
+    color: #fff;
     font-size: 16px;
 }
 
 .topic-item.active .topic-item__marker {
     background: var(--accent);
-    border-color: var(--warning);
-    box-shadow: 0 0 20px rgba(0, 212, 255, 0.6);
+    border-color: var(--accent-dark);
+    color: var(--primary);
 }
 
 .topic-item.locked .topic-item__marker {
     opacity: 0.5;
+    box-shadow: none;
 }
 
 .topic-item__content {
@@ -272,18 +311,19 @@ body {
 /* ========== INFO CARD (Bilgi Kartı) ========== */
 .info-card {
     background: var(--card-bg);
-    border-radius: 12px;
+    border-radius: 14px;
     padding: var(--spacing-lg);
     margin: var(--spacing-md);
-    border: 1px solid rgba(0, 212, 255, 0.2);
+    border: 1px solid var(--line);
     line-height: 1.8;
 }
 
 .info-card__title {
-    font-size: 18px;
+    font-size: 19px;
     font-weight: 700;
     color: var(--accent);
     margin-bottom: var(--spacing-md);
+    font-family: var(--font-display);
 }
 
 .info-card__text {
@@ -294,7 +334,7 @@ body {
 
 /* Interactive words (seçilebilir) */
 .interactive-word {
-    background: rgba(0, 212, 255, 0.2);
+    background: var(--accent-soft);
     border-bottom: 2px dashed var(--accent);
     cursor: pointer;
     transition: var(--transition-fast);
@@ -303,7 +343,7 @@ body {
 }
 
 .interactive-word:hover {
-    background: rgba(0, 212, 255, 0.4);
+    background: rgba(201, 161, 74, 0.32);
 }
 
 /* Geographic references */
@@ -311,7 +351,7 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    background: rgba(255, 170, 0, 0.2);
+    background: var(--info-soft);
     padding: 2px 6px;
     border-radius: 4px;
     cursor: pointer;
@@ -319,7 +359,7 @@ body {
 }
 
 .geo-reference:hover {
-    background: rgba(255, 170, 0, 0.4);
+    background: rgba(90, 122, 158, 0.32);
 }
 
 .geo-icon {
@@ -327,8 +367,8 @@ body {
 }
 
 .info-card__geo-bridge {
-    background: rgba(0, 212, 255, 0.1);
-    border-left: 4px solid var(--accent);
+    background: var(--info-soft);
+    border-left: 4px solid var(--info);
     padding: var(--spacing-md);
     border-radius: 6px;
     margin-top: var(--spacing-md);
@@ -339,10 +379,10 @@ body {
 /* ========== QUESTION SCREEN ========== */
 .question-container {
     background: var(--card-bg);
-    border-radius: 12px;
+    border-radius: 14px;
     padding: var(--spacing-lg);
     margin: var(--spacing-md);
-    border: 1px solid rgba(0, 212, 255, 0.2);
+    border: 1px solid var(--line);
 }
 
 .question-header {
@@ -355,11 +395,11 @@ body {
 
 .question-progress {
     color: var(--accent);
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .question-xp {
-    color: var(--warning);
+    color: var(--accent);
     font-weight: 600;
 }
 
@@ -382,9 +422,9 @@ body {
     align-items: center;
     gap: var(--spacing-md);
     padding: var(--spacing-md);
-    background: var(--secondary);
-    border: 2px solid transparent;
-    border-radius: 8px;
+    background: var(--secondary-light);
+    border: 2px solid var(--line);
+    border-radius: 10px;
     cursor: pointer;
     transition: var(--transition-fast);
     font-size: 16px;
@@ -392,7 +432,6 @@ body {
 
 .option:hover {
     border-color: var(--accent);
-    background: rgba(0, 212, 255, 0.1);
 }
 
 .option input[type="radio"] {
@@ -404,44 +443,44 @@ body {
 
 .option.selected {
     border-color: var(--accent);
-    background: rgba(0, 212, 255, 0.15);
+    background: var(--accent-soft);
 }
 
 .option.correct {
     border-color: var(--success);
-    background: rgba(0, 255, 65, 0.15);
+    background: var(--success-soft);
 }
 
 .option.incorrect {
     border-color: var(--danger);
-    background: rgba(255, 0, 110, 0.15);
+    background: var(--danger-soft);
 }
 
 /* ========== FEEDBACK ========== */
 .feedback {
     padding: var(--spacing-lg);
-    border-radius: 8px;
+    border-radius: 10px;
     margin: var(--spacing-md) 0;
     font-size: 16px;
     line-height: 1.6;
 }
 
 .feedback--success {
-    background: rgba(0, 255, 65, 0.2);
+    background: var(--success-soft);
     border-left: 4px solid var(--success);
-    color: var(--success);
+    color: #7fd9a8;
 }
 
 .feedback--error {
-    background: rgba(255, 0, 110, 0.2);
+    background: var(--danger-soft);
     border-left: 4px solid var(--danger);
-    color: var(--danger);
+    color: #f0a08c;
 }
 
 .feedback--info {
-    background: rgba(0, 212, 255, 0.2);
-    border-left: 4px solid var(--accent);
-    color: var(--accent);
+    background: var(--info-soft);
+    border-left: 4px solid var(--info);
+    color: #a9c4dd;
 }
 
 .feedback__title {
@@ -457,59 +496,64 @@ body {
 button, .btn {
     padding: var(--spacing-md) var(--spacing-lg);
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 16px;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
     transition: var(--transition-fast);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
 }
 
 .btn--primary {
     background: var(--accent);
-    color: var(--primary);
+    color: #2a1f08;
+    box-shadow: 0 4px 0 var(--accent-dark);
 }
 
-.btn--primary:hover {
-    box-shadow: 0 0 20px rgba(0, 212, 255, 0.6);
-    transform: translateY(-2px);
+.btn--primary:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 var(--accent-dark);
 }
 
 .btn--secondary {
-    background: var(--secondary);
-    color: var(--accent);
-    border: 2px solid var(--accent);
+    background: transparent;
+    color: var(--text);
+    border: 2px solid var(--line);
 }
 
 .btn--secondary:hover {
-    background: var(--accent);
-    color: var(--primary);
+    border-color: var(--accent);
+    color: var(--accent);
 }
 
 .btn--success {
     background: var(--success);
-    color: var(--primary);
+    color: #fff;
+    box-shadow: 0 4px 0 var(--success-dark);
 }
 
-.btn--success:hover {
-    box-shadow: 0 0 20px rgba(0, 255, 65, 0.6);
+.btn--success:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 var(--success-dark);
 }
 
 .btn--danger {
     background: var(--danger);
-    color: var(--text);
+    color: #fff;
+    box-shadow: 0 4px 0 var(--danger-dark);
 }
 
-.btn--danger:hover {
-    box-shadow: 0 0 20px rgba(255, 0, 110, 0.6);
+.btn--danger:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 var(--danger-dark);
 }
 
 .btn--large {
     width: 100%;
     padding: var(--spacing-lg) var(--spacing-xl);
-    font-size: 18px;
+    font-size: 17px;
     margin: var(--spacing-md) 0;
+    border-radius: 14px;
 }
 
 .btn--icon {
@@ -520,8 +564,10 @@ button, .btn {
 }
 
 .btn:disabled {
-    opacity: 0.5;
+    opacity: 0.4;
     cursor: not-allowed;
+    box-shadow: none !important;
+    transform: none !important;
 }
 
 /* ========== MODALS & OVERLAYS ========== */
@@ -531,7 +577,7 @@ button, .btn {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(8, 9, 14, 0.78);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -541,7 +587,7 @@ button, .btn {
 
 .modal {
     background: var(--card-bg);
-    border-radius: 12px;
+    border-radius: 14px;
     padding: var(--spacing-lg);
     max-width: 90%;
     max-height: 90vh;
@@ -571,21 +617,22 @@ button, .btn {
     justify-content: space-between;
     align-items: center;
     margin-bottom: var(--spacing-lg);
-    border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+    border-bottom: 1px solid var(--line);
     padding-bottom: var(--spacing-md);
 }
 
 .modal__title {
-    font-size: 20px;
+    font-size: 19px;
     font-weight: 700;
     color: var(--accent);
+    font-family: var(--font-display);
 }
 
 .modal__close {
     background: none;
     border: none;
-    color: var(--accent);
-    font-size: 28px;
+    color: var(--text-dim);
+    font-size: 26px;
     cursor: pointer;
     width: 32px;
     height: 32px;
@@ -595,7 +642,7 @@ button, .btn {
 }
 
 .modal__close:hover {
-    transform: scale(1.2);
+    color: var(--accent);
 }
 
 .modal__content {
@@ -605,9 +652,9 @@ button, .btn {
 /* ========== POPUP (Kelime Açıklaması) ========== */
 .popup {
     position: absolute;
-    background: var(--secondary);
+    background: var(--secondary-light);
     border: 2px solid var(--accent);
-    border-radius: 8px;
+    border-radius: 10px;
     padding: var(--spacing-md);
     min-width: 200px;
     max-width: 300px;
@@ -648,8 +695,8 @@ button, .btn {
     gap: 8px;
     padding: var(--spacing-md);
     background: var(--card-bg);
-    border: 2px solid var(--warning);
-    border-radius: 12px;
+    border: 2px solid var(--accent);
+    border-radius: 14px;
     text-align: center;
 }
 
@@ -660,12 +707,12 @@ button, .btn {
 .badge__name {
     font-size: 14px;
     font-weight: 600;
-    color: var(--warning);
+    color: var(--accent);
 }
 
 .badge--locked {
     opacity: 0.3;
-    border-color: var(--text-dim);
+    border-color: var(--line);
 }
 
 /* ========== BOTTOM NAVIGATION ========== */
@@ -676,7 +723,7 @@ button, .btn {
     right: 0;
     height: 70px;
     background: var(--secondary);
-    border-top: 2px solid var(--accent);
+    border-top: 1px solid var(--line);
     display: flex;
     justify-content: space-around;
     align-items: center;
@@ -703,20 +750,19 @@ button, .btn {
 }
 
 .nav-item__icon {
-    font-size: 24px;
+    font-size: 22px;
 }
 
 .nav-item__label {
     font-size: 11px;
     font-weight: 600;
-    text-transform: uppercase;
 }
 
 /* ========== MAP CONTAINER ========== */
 .map-container {
     width: 100%;
     height: 300px;
-    border-radius: 8px;
+    border-radius: 10px;
     margin: var(--spacing-md);
     overflow: hidden;
     border: 1px solid var(--accent);
@@ -781,4 +827,485 @@ button, .btn {
 .text-warning {
     color: var(--warning);
 }
+
+/* ==========================================
+   PARÇA PATİKASI — 5 ÖĞRENME MODU
+   "Mühür" rozet motifi: her durak bir mühür gibi
+   basılır, tamamlanınca dolgun altın mühüre döner.
+   ========================================== */
+
+.part-path {
+    padding: var(--spacing-lg) var(--spacing-md) var(--spacing-xl);
+    max-width: 440px;
+    margin: 0 auto;
+}
+
+.part-path__intro {
+    text-align: center;
+    margin-bottom: var(--spacing-xl);
+}
+
+.part-path__intro h2 {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    color: var(--accent);
+    margin-bottom: 4px;
+}
+
+.part-path__intro p {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+}
+
+.part-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    position: relative;
+}
+
+.part-row.align-start { justify-content: flex-start; }
+.part-row.align-end { justify-content: flex-end; }
+.part-row.align-end .part-row__info { order: -1; text-align: right; }
+
+.part-connector {
+    width: 100%;
+    height: 44px;
+    display: block;
+    margin: -2px 0;
+}
+
+.part-seal {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: transform 0.1s ease;
+    position: relative;
+}
+
+.part-seal:active { transform: translateY(3px); }
+
+.part-seal.unlocked {
+    background: var(--info);
+    box-shadow: 0 5px 0 var(--info-dark);
+    color: #fff;
+}
+
+.part-seal.done {
+    background: var(--accent);
+    box-shadow: 0 5px 0 var(--accent-dark);
+    color: #2a1f08;
+}
+
+.part-seal.locked {
+    background: var(--secondary-light);
+    box-shadow: 0 5px 0 #0c0e16;
+    color: var(--text-dim);
+    cursor: default;
+}
+
+.part-row__info { flex: 1; }
+.part-row__title { font-weight: 700; font-size: 0.92rem; color: var(--text); }
+.part-row__sub { font-size: 0.75rem; color: var(--text-dim); margin-top: 2px; }
+
+/* ==========================================
+   KONU / ALT BAŞLIK KUTU LİSTESİ
+   ========================================== */
+
+.box-list { display: flex; flex-direction: column; }
+
+.box-connector {
+    width: 3px;
+    height: 20px;
+    background: var(--line);
+    margin-left: 27px;
+}
+
+.box-node {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    background: var(--card-bg);
+    border: 2px solid var(--tc, var(--line));
+    border-radius: 14px;
+    padding: 1rem 1.1rem;
+    cursor: pointer;
+    transition: transform 0.12s ease;
+    text-align: left;
+}
+
+.box-node:active { transform: scale(0.98); }
+
+.box-node .box-num {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: var(--tc, var(--secondary-light));
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.box-node .box-label {
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: var(--tc, var(--text));
+    line-height: 1.35;
+}
+
+.box-node .box-sub {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    margin-top: 2px;
+}
+
+.box-node.done { background: rgba(255,255,255,0.02); }
+.box-node.done .box-num { background: var(--tc); color: var(--primary); }
+.box-node.done .box-num::after { content: '✓'; }
+
+.box-node.locked {
+    border-color: var(--line);
+    cursor: default;
+    opacity: 0.5;
+}
+.box-node.locked .box-num { background: var(--secondary-light); color: var(--text-dim); }
+.box-node.locked .box-label { color: var(--text-dim); }
+
+/* ==========================================
+   LOKMA — BİLGİ KARTI (Durak 1: Lesson)
+   ========================================== */
+
+.lesson-card {
+    max-width: 540px;
+    margin: 0 auto;
+    padding: var(--spacing-md);
+}
+
+.lesson-card__eyebrow {
+    color: var(--info);
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.5rem;
+}
+
+.lesson-card__title {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0 0 1.1rem;
+    line-height: 1.35;
+}
+
+.lesson-card__text {
+    font-size: 1.02rem;
+    line-height: 1.75;
+    color: var(--text);
+    margin: 0 0 1.4rem;
+}
+
+.lesson-card__text .hl {
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.tip-box {
+    background: var(--info-soft);
+    border: 1px solid var(--info);
+    border-radius: 12px;
+    padding: 0.9rem 1rem;
+    font-size: 0.86rem;
+    line-height: 1.55;
+    color: var(--text);
+}
+
+.tip-box b { color: var(--info); }
+
+/* ==========================================
+   SORU-CEVAP MOTORU (Hızlı Test / KPSS Testi / Lokma Kontrol)
+   ========================================== */
+
+.q-screen {
+    max-width: 540px;
+    margin: 0 auto;
+    padding: var(--spacing-md) var(--spacing-md) 6rem;
+}
+
+.q-kicker {
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    margin-bottom: 0.6rem;
+}
+
+.q-text {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.45;
+    margin: 0 0 1.4rem;
+}
+
+.q-options { display: flex; flex-direction: column; gap: 0.65rem; }
+
+.q-option-wrap { display: flex; flex-direction: column; }
+
+.q-option {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    background: var(--secondary-light);
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    padding: 0.9rem 1rem;
+    color: var(--text);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.08s ease;
+    width: 100%;
+}
+
+.q-option .letter {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    background: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 800;
+    flex-shrink: 0;
+    color: var(--text-dim);
+}
+
+.q-option:active { transform: scale(0.985); }
+
+.q-option.correct { border-color: var(--success); background: var(--success-soft); }
+.q-option.correct .letter { background: var(--success); color: #fff; }
+
+.q-option.incorrect { border-color: var(--danger); background: var(--danger-soft); }
+.q-option.incorrect .letter { background: var(--danger); color: #fff; }
+
+.q-option.dimmed { opacity: 0.45; }
+.q-option.disabled { cursor: default; }
+
+.opt-explain {
+    display: none;
+    font-size: 0.76rem;
+    line-height: 1.5;
+    color: var(--text-dim);
+    padding: 0.5rem 0.9rem 0.1rem 2.9rem;
+}
+.opt-explain.show { display: flex; align-items: flex-start; gap: 0.4rem; }
+.opt-explain-icon { font-weight: 800; flex-shrink: 0; }
+.opt-explain.ok { color: #8fd1a8; }
+.opt-explain.ok .opt-explain-icon { color: var(--success); }
+.opt-explain.no { color: #e3a394; }
+.opt-explain.no .opt-explain-icon { color: var(--danger); }
+
+.inline-continue-wrap { margin-top: 0.5rem; padding-bottom: 1.5rem; }
+
+/* Alttan kayan sonuç paneli (KPSS Testi / Full Test) */
+.result-panel {
+    position: fixed;
+    left: 50%;
+    bottom: 70px;
+    background: var(--secondary);
+    border-top: 2px solid var(--line);
+    padding: 1.1rem var(--spacing-lg);
+    padding-bottom: calc(1.1rem + env(safe-area-inset-bottom));
+    transform: translate(-50%, 110%);
+    transition: transform 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+    z-index: 200;
+    max-width: 600px;
+    width: 100%;
+    border-radius: 16px 16px 0 0;
+}
+.result-panel.show { transform: translate(-50%, 0); }
+.result-panel.correct { background: #16241c; border-top-color: var(--success); }
+.result-panel.incorrect { background: #271713; border-top-color: var(--danger); }
+
+.result-head { display: flex; align-items: center; gap: 0.7rem; margin-bottom: 0.6rem; }
+.result-icon {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; flex-shrink: 0; color: #fff;
+}
+.result-panel.correct .result-icon { background: var(--success); }
+.result-panel.incorrect .result-icon { background: var(--danger); }
+.result-title { font-weight: 800; font-size: 1.02rem; }
+.result-panel.correct .result-title { color: #8fd1a8; }
+.result-panel.incorrect .result-title { color: #e3a394; }
+.result-explain { color: var(--text-dim); font-size: 0.85rem; line-height: 1.55; margin: 0 0 1rem; padding-left: 2.5rem; }
+
+/* ==========================================
+   EŞLEŞTİRME OYUNU (Durak 3: Match)
+   ========================================== */
+
+.match-screen { max-width: 540px; margin: 0 auto; padding: var(--spacing-md); }
+
+.match-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.65rem;
+    margin-top: 1rem;
+}
+
+.match-card {
+    background: var(--secondary-light);
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    padding: 0.85rem 0.65rem;
+    font-size: 0.83rem;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    min-height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.match-card.selected { border-color: var(--info); background: var(--info-soft); }
+.match-card.matched { border-color: var(--success); background: var(--success-soft); opacity: 0.6; cursor: default; }
+.match-card.wrong { border-color: var(--danger); background: var(--danger-soft); }
+
+/* ==========================================
+   BİLGİ KARTLARI / FLASHCARD (Durak 5: Flash)
+   ========================================== */
+
+.flip-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-lg) var(--spacing-md);
+    max-width: 460px;
+    margin: 0 auto;
+}
+
+.flip-hint { color: var(--text-dim); font-size: 0.8rem; margin-bottom: 1rem; }
+
+.flip-card {
+    width: 100%;
+    max-width: 380px;
+    height: 300px;
+    position: relative;
+    perspective: 1200px;
+    margin-bottom: 1.4rem;
+}
+
+.flip-inner {
+    position: absolute;
+    inset: 0;
+    transition: transform 0.5s;
+    transform-style: preserve-3d;
+    cursor: pointer;
+}
+.flip-inner.flipped { transform: rotateY(180deg); }
+
+.flip-face {
+    position: absolute;
+    inset: 0;
+    border-radius: 18px;
+    backface-visibility: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.8rem;
+    text-align: center;
+}
+
+.flip-front { background: var(--info); color: #fff; box-shadow: 0 6px 0 var(--info-dark); }
+.flip-back { background: var(--accent); color: #2a1f08; transform: rotateY(180deg); box-shadow: 0 6px 0 var(--accent-dark); }
+
+.flip-face .flip-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.75;
+    margin-bottom: 0.8rem;
+}
+.flip-face .flip-content { font-size: 1.15rem; font-weight: 700; line-height: 1.5; }
+
+.flip-actions { display: flex; gap: 0.8rem; width: 100%; max-width: 380px; }
+.flip-actions button {
+    flex: 1;
+    padding: 0.85rem;
+    border-radius: 12px;
+    border: 2px solid var(--line);
+    background: var(--secondary-light);
+    color: var(--text);
+    font-weight: 700;
+    font-size: 0.82rem;
+    box-shadow: none;
+}
+.flip-actions button.repeat { color: var(--danger); border-color: var(--danger); }
+.flip-actions button.know { color: var(--success); border-color: var(--success); }
+
+/* ==========================================
+   ALT BAŞLIK TAMAMLANDI EKRANI
+   ========================================== */
+
+.completion-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: var(--spacing-xl) var(--spacing-lg);
+}
+
+.completion-emoji { font-size: 3.6rem; margin-bottom: 1rem; }
+
+.completion-wrap h2 {
+    font-family: var(--font-display);
+    color: var(--accent);
+    font-size: 1.4rem;
+    margin: 0 0 0.4rem;
+}
+
+.completion-wrap p { color: var(--text-dim); margin: 0 0 1.8rem; font-size: 0.92rem; }
+
+.completion-stats { display: flex; gap: 1rem; margin-bottom: 1.6rem; }
+
+.stat-pill {
+    background: var(--card-bg);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 0.85rem 1.2rem;
+    text-align: center;
+    min-width: 88px;
+}
+.stat-pill .num { font-size: 1.3rem; font-weight: 800; color: var(--text); }
+.stat-pill .lbl { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; }
+
+/* Konu renk paleti yardımcı class'ları (kutu listesi için) */
+.topic-c0 { --tc: var(--tc-0); }
+.topic-c1 { --tc: var(--tc-1); }
+.topic-c2 { --tc: var(--tc-2); }
+.topic-c3 { --tc: var(--tc-3); }
+.topic-c4 { --tc: var(--tc-4); }
+.topic-c5 { --tc: var(--tc-5); }
 

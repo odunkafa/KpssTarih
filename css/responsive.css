@@ -212,22 +212,10 @@
     }
 }
 
-/* ========== DARK MODE (sistem tercihine göre) ========== */
-@media (prefers-color-scheme: dark) {
-    /* Zaten dark mode'da, değişiklik yok */
-}
-
-@media (prefers-color-scheme: light) {
-    /* Light mode destekleme (opsiyonel) */
-    :root {
-        --primary: #ffffff;
-        --secondary: #f5f5f5;
-        --background: #fafafa;
-        --card-bg: #f0f0f0;
-        --text: #1a1a2e;
-        --text-dim: #666666;
-    }
-}
+/* ========== TEK TEMA ==========
+   Bu uygulama kasıtlı olarak tek bir görsel kimlik (sıcak lacivert/pirinç akademi
+   teması) üzerine kurulu. Sistem light/dark tercihine göre otomatik geçiş yapmıyoruz,
+   çünkü patika/mühür/lokma motifleri bu koyu zemine göre tasarlandı. */
 
 /* ========== REDUCED MOTION ========== */
 @media (prefers-reduced-motion: reduce) {
