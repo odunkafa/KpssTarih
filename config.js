@@ -16,10 +16,20 @@ const CONFIG = {
     CACHE_VERSION: 'v1',
     
     // ============ GAMEPLAY SETTINGS ============
-    XP_PER_QUESTION: 50,
-    XP_PER_COMPLETED_SUBTOPIC: 150,
+    XP_PER_QUESTION: 15,
+    XP_PER_COMPLETED_SUBTOPIC: 100,
+    XP_PER_COMPLETED_PART: 20,
     QUESTIONS_PER_SUBTOPIC: 10,
     WRONG_ANSWER_RETRY_POSITION: 'end', // 'end' = listenin sonuna ekle
+
+    // ============ 5 ÖĞRENME MODU (Parça Patikası) ============
+    LEARNING_PARTS: [
+        { key: 'lesson',    icon: '💡', label: 'Bilgi + Kontrol Sorusu' },
+        { key: 'quickTest', icon: '⚡', label: 'Hızlı Test' },
+        { key: 'match',     icon: '🔗', label: 'Eşleştirme' },
+        { key: 'fullTest',  icon: '🎯', label: 'KPSS Testi' },
+        { key: 'flash',     icon: '🃏', label: 'Bilgi Kartları' }
+    ],
     
     // ============ LEVELS & BADGES ============
     LEVELS: [
@@ -31,11 +41,11 @@ const CONFIG = {
     ],
     
     BADGES: [
-        { id: 'geo_detective', name: 'Coğrafya Dedektifi', icon: '🗺️', xp: 200 },
+        { id: 'first_subtopic', name: 'İlk Mühür', icon: '🔰', xp: 100 },
         { id: 'history_master', name: 'Tarih Ustası', icon: '📚', xp: 500 },
         { id: 'speedrunner', name: 'Hızlı Öğrenci', icon: '⚡', xp: 300 },
         { id: 'perfect_week', name: 'Mükemmel Hafta', icon: '🔥', xp: 400 },
-        { id: 'map_explorer', name: 'Harita Kaşifi', icon: '🧭', xp: 250 }
+        { id: 'matcher', name: 'Eşleştirme Ustası', icon: '🔗', xp: 250 }
     ],
     
     // ============ STORAGE ============
@@ -83,37 +93,60 @@ const CONFIG = {
     
     // ============ CLAUDE PROMPT TEMPLATES ============
     PROMPTS: {
+        // 5 öğrenme modunu tek seferde üreten ana prompt.
+        // Şema, uiRenderer.js + gameEngine.js'in beklediği yapı ile birebir eşleşir.
         SUBTOPIC_CONTENT: `
-Siz KPSS Tarih sınavına hazırlanan öğrenciler için içerik oluşturuyorsunuz.
+Sen KPSS Tarih sınavına hazırlanan öğrenciler için, Duolingo tarzı "lokma lokma" bir öğrenme deneyimi tasarlayan bir içerik editörüsün. İçerik MEB/KPSS resmi müfredatına sadık, sınav formatına uygun ve gerçek bilgi içermeli (uydurma tarih/isim YASAK).
 
-Aşağıdaki formatta SADECE JSON döndürün (başka bir şey yazmayın):
+Aşağıdaki formatta SADECE JSON döndür (başka hiçbir açıklama, markdown işareti veya metin ekleme):
 
 {
-  "mainText": "20-30 satırlık ana metin. Kelimeleri [brackets] içine al (seçilebilir)",
-  "geoInfo": "Coğrafya köprüsü: Bu konunun coğrafyası neden önemli? 5-10 cümle",
-  "geoReferences": [
-    { "place": "Yer adı", "context": "Bu yerin konuyla ilişkisi" },
-    { "place": "Başka Yer", "context": "Açıklama" }
-  ],
-  "interactiveWords": [
-    { "word": "kelime veya kelime grubu", "explanation": "Kısa açıklama (1-2 cümle)" }
-  ],
-  "questions": [
+  "lessonCards": [
     {
-      "q": "Soru metni (kısa, net, KPSS tarzı)",
-      "options": [
-        { "text": "Seçenek 1", "correct": false },
-        { "text": "Doğru Cevap", "correct": true },
-        { "text": "Seçenek 3", "correct": false }
-      ],
-      "explanations": [
-        "Seçenek 1 neden yanlış: açıklama",
-        "Doğru cevap açıklaması",
-        "Seçenek 3 neden yanlış: açıklama"
-      ]
+      "eyebrow": "Kısa kategori etiketi (ör: 'İlk Türk Devleti')",
+      "title": "Kart başlığı (kısa, çarpıcı)",
+      "text": "3-5 cümlelik öğretici metin. En kritik kavramları <span class=\\"hl\\">böyle</span> vurgula.",
+      "tip": "KPSS'de bu konunun nasıl sorulduğuna dair somut bir ipucu (1-2 cümle)",
+      "quiz": {
+        "q": "Bu lokmadaki bilgiyi pekiştiren kısa kontrol sorusu",
+        "opts": ["Seçenek A", "Seçenek B", "Seçenek C"],
+        "correct": 1,
+        "optExplain": ["A neden yanlış/eksik", "B neden doğru", "C neden yanlış/eksik"]
+      }
     }
+  ],
+  "quickTest": [
+    {
+      "q": "3 şıklı hızlı test sorusu",
+      "opts": ["Seçenek A", "Seçenek B", "Seçenek C"],
+      "correct": 0,
+      "optExplain": ["A açıklaması", "B açıklaması", "C açıklaması"]
+    }
+  ],
+  "matchPairs": [
+    { "term": "Kavram/isim", "def": "Kısa tanımı veya ilişkili olduğu olgu" }
+  ],
+  "fullTest": [
+    {
+      "q": "5 şıklı, gerçek KPSS formatına yakın soru",
+      "opts": ["A", "B", "C", "D", "E"],
+      "correct": 2,
+      "explain": "Doğru cevabın kısa açıklaması"
+    }
+  ],
+  "flashcards": [
+    { "front": "Kavram/isim/tarih", "back": "Kısa, net açıklama" }
   ]
 }
+
+Kurallar:
+- lessonCards: 4-6 adet, her biri TEK bir alt-kavramı anlatsın (lokma lokma ilerleme mantığı).
+- quickTest: tam 10 adet, 3 şıklı.
+- matchPairs: 4-6 adet, terim-tanım eşleşmesi net ve tek doğru olmalı.
+- fullTest: tam 10 adet, 5 şıklı, gerçek KPSS sınav diline yakın (sadece "explain" yeterli, optExplain gerekmez).
+- flashcards: lessonCards ile aynı sayıda veya yakın, en önemli kavram/tarih/isimleri içersin.
+- Tüm sorularda yanlış şıklar mantıklı çeldiriciler olmalı (rastgele saçma seçenek değil).
+- Türkçe, sınav diline uygun, resmi ama sıkıcı olmayan bir üslup kullan.
 
 Ünite: {unit}
 Konu: {topic}
